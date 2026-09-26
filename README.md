@@ -1,19 +1,26 @@
-# ConTrack V1
+# ConTrack V2.3
 
-Files:
-- index.html — app
-- manifest.webmanifest — Homescreen/PWA metadata
-- service-worker.js — offline cache
-- icon-192.png / icon-512.png / apple-touch-icon.png — app icons
+## New: optional pain intensity per contraction
+- Optional 0–10 pain intensity rating.
+- Never required to save a contraction.
+- Quick post-contraction rating with one-tap 0–10 buttons and a “Later” option.
+- Rating can be added, changed, or removed later in History/Edit.
+- Latest pain rating shown near the latest timing facts.
+- History shows pain rating per contraction.
+- Optional pain-rating strip below the unified timing chart, aligned to the same contraction timestamps.
+- Summary includes latest pain rating, rated-count, and recorded pain range.
+- CSV adds `pain_intensity` and `pain_rated_at_iso`.
+- JSON naturally preserves the new fields.
+- Existing V1/V2/V2.1/V2.2 data remain compatible and receive `painIntensity: null` until rated.
 
-Deployment:
-1. Upload all files in this folder to any HTTPS static host.
-2. Open the HTTPS URL in Safari on iPhone.
-3. Share → Add to Home Screen → Open as Web App.
-4. Open Settings once to set gestational week, maternity-unit phone, local emergency number, and your maternity-unit contact rule.
+Pain ratings remain subjective user-entered values and do not affect labor pattern calculations or medical guidance.
 
-Privacy:
-All contraction/session data is stored locally in browser localStorage. No backend or analytics are included.
-
-Medical scope:
-This tracker records timing and patterns only. It does not diagnose labour stage or cervical dilation.
+## Existing features preserved
+- 11-language flag dropdown
+- RTL Farsi / Arabic
+- 5-design Design Studio
+- chart near the top
+- local/offline storage
+- editable history and notes
+- factual summaries and exports
+- Dark/Light/Auto, large text, reduced motion and haptics

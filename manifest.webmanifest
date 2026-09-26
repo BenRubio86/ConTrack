@@ -1,12 +1,12 @@
 {
-  "name": "Wehentracker V1",
-  "short_name": "Wehen",
-  "description": "Offline-fähiger Wehentracker mit Dauer, Intervall, Trend und Safety-Hinweisen.",
+  "name": "ConTrack",
+  "short_name": "ConTrack",
+  "description": "Calm, offline-first contraction timer and history tool.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#070b12",
-  "theme_color": "#111827",
+  "background_color": "#081018",
+  "theme_color": "#0b1118",
   "icons": [
     {
       "src": "icon-192.png",

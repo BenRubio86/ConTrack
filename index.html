@@ -1,504 +1,1191 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-  <meta name="theme-color" content="#111827">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Wehentracker">
-  <meta name="description" content="Offline-fähiger Wehentracker mit Dauer, Intervall, Trend, Safety-Hinweisen und vier Sprachen.">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png">
-  <title>Wehentracker V1</title>
-  <style>
-    :root{
-      color-scheme:dark;
-      --bg:#070b12;--card:#111827;--card2:#182233;--line:#2a3850;
-      --text:#f8fafc;--muted:#9fb0c7;--accent:#5eead4;--accent2:#38bdf8;
-      --warn:#fbbf24;--danger:#fb7185;--ok:#86efac;--shadow:0 14px 40px rgba(0,0,0,.28);
-    }
-    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-    html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,"Noto Sans SC","Noto Sans Devanagari",Arial,sans-serif}
-    body{min-height:100dvh}
-    button,input,select{font:inherit}
-    button{border:0;color:inherit}
-    .app{width:min(100%,520px);margin:auto;min-height:100dvh;padding:calc(env(safe-area-inset-top) + 12px) 14px calc(env(safe-area-inset-bottom) + 28px)}
-    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
-    .brand{display:flex;align-items:center;gap:10px}
-    .logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(145deg,var(--accent),var(--accent2));display:grid;place-items:center;color:#05131a;font-weight:900}
-    h1{font-size:19px;margin:0;letter-spacing:.2px}.sub{font-size:11px;color:var(--muted);margin-top:2px}
-    .top-actions{display:flex;gap:7px}.icon-btn,.lang{background:var(--card);border:1px solid var(--line);border-radius:12px;min-height:40px;padding:0 11px}
-    .lang{font-weight:800}
-    .card{background:linear-gradient(180deg,var(--card),#0f1726);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:var(--shadow);margin:10px 0}
-    .status-card{border-left:5px solid var(--accent)}
-    .status-card.warn{border-left-color:var(--warn)} .status-card.danger{border-left-color:var(--danger)}
-    .status-card.ok{border-left-color:var(--ok)}
-    .eyebrow{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:800}
-    .status-title{font-size:20px;font-weight:900;margin:5px 0 3px}.status-copy{color:var(--muted);font-size:13px;line-height:1.35}
-    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
-    .stat{background:var(--card2);border:1px solid var(--line);padding:9px;border-radius:13px;min-width:0}
-    .stat .k{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.stat .v{font-size:18px;font-weight:900;margin-top:3px}
-    .tracker{display:grid;place-items:center;padding:13px 0 7px}
-    .timer{font-variant-numeric:tabular-nums;font-size:44px;font-weight:950;letter-spacing:-1.5px;min-height:54px}
-    .timer-label{color:var(--muted);font-size:12px;margin-bottom:10px}
-    .main-btn{width:min(72vw,310px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 28%,#70f4dc,#24c6ad 56%,#159381);color:#04110e;font-size:24px;font-weight:950;box-shadow:0 0 0 9px rgba(94,234,212,.09),0 20px 50px rgba(45,212,191,.22);transition:.15s transform,.2s background}
-    .main-btn:active{transform:scale(.975)}
-    .main-btn.active{background:radial-gradient(circle at 35% 28%,#ff9bad,#fb7185 58%,#d43f59);color:#25050b;box-shadow:0 0 0 9px rgba(251,113,133,.09),0 20px 50px rgba(251,113,133,.22)}
-    .quick-row{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:14px}
-    .quick{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 5px;font-size:11px;min-height:54px}
-    .quick span{display:block;font-size:17px;margin-bottom:3px}
-    .actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:10px}
-    .secondary{background:var(--card2);border:1px solid var(--line);border-radius:12px;min-height:42px;font-size:12px;font-weight:700}
-    .secondary:disabled{opacity:.35}
-    .section-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:7px}
-    .section-title{font-size:14px;font-weight:900}.section-note{font-size:10px;color:var(--muted)}
-    canvas{display:block;width:100%;height:150px;background:#0b1320;border-radius:12px;border:1px solid var(--line)}
-    .legend{display:flex;gap:13px;color:var(--muted);font-size:10px;margin-top:7px}.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
-    .history{display:grid;gap:6px;margin-top:8px}.row{display:grid;grid-template-columns:56px 1fr 1fr 34px;gap:6px;align-items:center;padding:8px 9px;background:var(--card2);border-radius:11px;font-size:12px}
-    .row b{font-variant-numeric:tabular-nums}.row .muted{color:var(--muted)}.edit-mini{background:transparent;color:var(--accent2);font-weight:800;padding:4px}
-    .notice{font-size:11px;line-height:1.45;color:var(--muted);padding:0 3px}.notice strong{color:var(--text)}
-    .contact-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
-    .contact-btn{border-radius:12px;min-height:44px;font-weight:850;background:var(--accent2);color:#03151d}
-    .contact-btn.emergency{background:var(--danger);color:#23030a}
-    dialog{width:min(calc(100% - 24px),480px);max-height:88dvh;background:#0d1624;color:var(--text);border:1px solid var(--line);border-radius:20px;padding:0;box-shadow:0 30px 80px rgba(0,0,0,.55)}
-    dialog::backdrop{background:rgba(0,0,0,.7);backdrop-filter:blur(4px)}
-    .modal{padding:16px}.modal h2{margin:0 0 12px;font-size:19px}.modal p,.modal li{font-size:13px;line-height:1.45;color:var(--muted)}
-    .field{display:grid;gap:5px;margin:11px 0}.field label{font-size:11px;font-weight:800;color:var(--muted)}.field input,.field select{width:100%;background:var(--card2);color:var(--text);border:1px solid var(--line);border-radius:11px;padding:11px}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-    .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:15px}.modal-actions button{padding:10px 14px;border-radius:11px;background:var(--card2);border:1px solid var(--line)}.modal-actions .primary{background:var(--accent);color:#03201b;border-color:transparent;font-weight:900}
-    .danger-zone{border-top:1px solid var(--line);margin-top:16px;padding-top:13px}.danger-zone button{background:#35131a;color:#ffb6c1}
-    .source{font-size:11px;color:var(--muted);padding:8px 0}.source a{color:var(--accent2)}
-    .pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 8px;background:var(--card2);border:1px solid var(--line);font-size:10px;color:var(--muted)}
-    .offline{position:fixed;z-index:9;left:50%;bottom:calc(env(safe-area-inset-bottom) + 10px);transform:translateX(-50%);background:#1f2937;border:1px solid var(--line);padding:7px 10px;border-radius:999px;font-size:10px;display:none}
-    .offline.show{display:block}
-    @media (min-width:700px){body{background:radial-gradient(circle at top,#122035,var(--bg) 45%)}.app{padding-left:20px;padding-right:20px}}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0b1118">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ConTrack">
+<meta name="description" content="Calm, offline-first contraction timer and history tool.">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<title>ConTrack</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#081018;--surface:#101a25;--surface2:#162331;--surface3:#1d2d3d;
+  --line:#314255;--text:#f4f7fb;--muted:#aab8c6;--soft:#d5e0ea;
+  --accent:#79d7c8;--accentText:#04201b;--blue:#8ec5ff;--amber:#ffd479;--danger:#ff9ca9;
+  --focus:#ffffff;--shadow:0 14px 40px rgba(0,0,0,.22);
+  --radius-card:18px;--radius-control:14px;--radius-button:17px;
+  --font-ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Noto Sans SC","Noto Sans Devanagari",Arial,sans-serif;
+  --font-display:var(--font-ui);
+  --fs:16px;--motion:1;
+}
+:root[data-theme="light"]{
+  color-scheme:light;--bg:#f4f7f9;--surface:#ffffff;--surface2:#eef3f6;--surface3:#e7eef2;
+  --line:#c8d4dc;--text:#14202a;--muted:#5e6d78;--soft:#31404b;--accent:#167f72;
+  --accentText:#fff;--blue:#1769aa;--amber:#9c6b00;--danger:#b3243e;--shadow:0 12px 28px rgba(22,42,58,.10);
+}
+
+/* Design Studio presets */
+:root[data-design="calm"]{
+  --accent:#79d7c8;--accentText:#04201b;--blue:#8ec5ff;--amber:#ffd479;--danger:#ff9ca9;
+  --radius-card:18px;--radius-control:14px;--radius-button:17px;
+  --font-ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Noto Sans SC","Noto Sans Devanagari",Arial,sans-serif;
+  --font-display:var(--font-ui);
+}
+:root[data-theme="light"][data-design="calm"]{
+  --accent:#167f72;--accentText:#fff;--blue:#1769aa;--amber:#9c6b00;--danger:#b3243e;
+}
+
+:root[data-design="ocean"]{
+  --bg:#06121f;--surface:#0d2033;--surface2:#14314b;--surface3:#1b405d;--line:#315977;
+  --text:#f3f8fc;--muted:#9eb7ca;--soft:#d4e5f2;
+  --accent:#6ec8ff;--accentText:#031521;--blue:#b6dcff;--amber:#f4c95d;--danger:#ff9a9a;
+  --radius-card:12px;--radius-control:10px;--radius-button:12px;
+  --font-ui:"Avenir Next","Segoe UI",Arial,sans-serif;--font-display:"Avenir Next","Segoe UI",Arial,sans-serif;
+}
+:root[data-theme="light"][data-design="ocean"]{
+  --bg:#eef7fb;--surface:#ffffff;--surface2:#e4f2fa;--surface3:#d6eaf5;--line:#b6d2e2;
+  --text:#102230;--muted:#587284;--soft:#2b4658;--accent:#0c78b7;--accentText:#fff;--blue:#245f90;--amber:#9f6c00;--danger:#ad3045;
+}
+
+:root[data-design="warm"]{
+  --bg:#17110d;--surface:#251c16;--surface2:#34271f;--surface3:#453328;--line:#66503f;
+  --text:#fff8ef;--muted:#c8b4a0;--soft:#ead9c7;
+  --accent:#e7a56d;--accentText:#2b1204;--blue:#e3c3a3;--amber:#ffd08a;--danger:#ff9f95;
+  --radius-card:26px;--radius-control:20px;--radius-button:28px;
+  --font-ui:"Trebuchet MS","Segoe UI",Arial,sans-serif;--font-display:Georgia,"Times New Roman",serif;
+}
+:root[data-theme="light"][data-design="warm"]{
+  --bg:#faf5ef;--surface:#fffdf9;--surface2:#f5eadf;--surface3:#eedfce;--line:#dbc5af;
+  --text:#2d2119;--muted:#806c5c;--soft:#513f33;--accent:#b45f27;--accentText:#fff;--blue:#865936;--amber:#a06709;--danger:#b13a3f;
+}
+
+:root[data-design="lavender"]{
+  --bg:#100d18;--surface:#1c1729;--surface2:#2a223b;--surface3:#382d4f;--line:#594a73;
+  --text:#fbf8ff;--muted:#bcb1d1;--soft:#e3daf0;
+  --accent:#c7a7ff;--accentText:#1d0d33;--blue:#9ec5ff;--amber:#ffd980;--danger:#ff9ab7;
+  --radius-card:22px;--radius-control:999px;--radius-button:999px;
+  --font-ui:"Arial Rounded MT Bold","Segoe UI",Arial,sans-serif;--font-display:"Arial Rounded MT Bold","Segoe UI",Arial,sans-serif;
+}
+:root[data-theme="light"][data-design="lavender"]{
+  --bg:#f7f2ff;--surface:#ffffff;--surface2:#efe6ff;--surface3:#e4d6fa;--line:#cdb8eb;
+  --text:#241632;--muted:#736184;--soft:#4d3b5f;--accent:#7551b6;--accentText:#fff;--blue:#4a72a6;--amber:#9b6a00;--danger:#ad3558;
+}
+
+:root[data-design="mono"]{
+  --bg:#000;--surface:#0b0b0b;--surface2:#151515;--surface3:#1d1d1d;--line:#666;
+  --text:#fff;--muted:#c7c7c7;--soft:#ededed;
+  --accent:#fff;--accentText:#000;--blue:#fff;--amber:#fff;--danger:#fff;
+  --radius-card:4px;--radius-control:2px;--radius-button:2px;--shadow:none;
+  --font-ui:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+  --font-display:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+}
+:root[data-theme="light"][data-design="mono"]{
+  --bg:#fff;--surface:#fff;--surface2:#f0f0f0;--surface3:#e3e3e3;--line:#111;
+  --text:#000;--muted:#333;--soft:#111;--accent:#000;--accentText:#fff;--blue:#000;--amber:#000;--danger:#000;
+}
+
+:root[data-text="large"]{--fs:18px}
+:root[data-text="xl"]{--fs:20px}
+*{box-sizing:border-box}
+html{font-size:var(--fs);background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-ui);min-height:100dvh}
+button,input,select,textarea{font:inherit}
+button{color:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+button,.tap{min-width:44px;min-height:44px}
+.app{width:min(100%,560px);margin:auto;padding:calc(env(safe-area-inset-top) + 10px) 14px calc(145px + env(safe-area-inset-bottom))}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.brand{display:flex;align-items:center;gap:10px}.mark{width:40px;height:40px;border-radius:14px;background:var(--accent);display:grid;place-items:center;color:var(--accentText);font-weight:950;letter-spacing:-1px}
+.brand h1{font-size:1.05rem;margin:0;font-family:var(--font-display)}.brand .sub{font-size:.72rem;color:var(--muted);margin-top:2px}
+.top-actions{display:flex;align-items:center;gap:7px}
+.quick-lang{width:auto;max-width:120px;border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:var(--radius-control);padding:0 10px;font-weight:850}
+.help-btn{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-control);padding:0 12px;font-weight:850}
+.nav{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--surface);border:1px solid var(--line);padding:4px;border-radius:15px;position:sticky;top:calc(env(safe-area-inset-top) + 5px);z-index:6}
+.nav button{border:0;border-radius:11px;background:transparent;color:var(--muted);font-size:.78rem;font-weight:800;padding:7px 3px}
+.nav button[aria-selected="true"]{background:var(--surface3);color:var(--text)}
+main{margin-top:10px}.view[hidden]{display:none}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);padding:14px;margin:10px 0;box-shadow:var(--shadow)}
+.section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:10px}
+.section-title{font-size:.98rem;font-weight:900}.section-note{font-size:.72rem;color:var(--muted);line-height:1.35}
+.hero{padding:16px}
+.state-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.live-time{font-size:3.25rem;font-weight:950;letter-spacing:-2px;font-variant-numeric:tabular-nums;line-height:1}
+.live-label{color:var(--muted);font-size:.82rem;margin-top:6px}
+.pulse{display:inline-flex;align-items:center;gap:7px;font-size:.76rem;color:var(--muted);font-weight:800}
+.pulse i{width:10px;height:10px;border-radius:50%;background:var(--accent);display:block}
+.running .pulse i{background:var(--danger)}
+.primary-facts{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:16px}
+.fact{background:var(--surface2);border:1px solid var(--line);border-radius:var(--radius-control);padding:10px;min-width:0}
+.fact .k{font-size:.70rem;color:var(--muted);line-height:1.25}.fact .v{font-size:1.15rem;font-weight:950;margin-top:3px;font-variant-numeric:tabular-nums}.fact .v.small{font-size:.96rem}
+.tip{font-size:.78rem;color:var(--muted);line-height:1.45;margin-top:11px}
+.notice{padding:10px 12px;border-radius:13px;background:var(--surface2);border-left:4px solid var(--blue);font-size:.80rem;line-height:1.4;color:var(--soft)}
+.snackbar{display:none;align-items:center;justify-content:space-between;gap:8px;background:var(--surface3);border:1px solid var(--line);border-radius:var(--radius-control);padding:10px 11px;margin-top:10px}
+.snackbar.show{display:flex}.snackbar .msg{font-size:.8rem}.snackbar .actions{display:flex;gap:5px}.link-btn{border:0;background:transparent;color:var(--blue);font-weight:900;padding:6px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 1px 4px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;border:1px solid var(--line);background:var(--surface2);border-radius:999px;padding:6px 11px;min-height:38px;font-size:.76rem;font-weight:850;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accentText);border-color:var(--accent)}
+.snapshot{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.metric{background:var(--surface2);border:1px solid var(--line);border-radius:var(--radius-control);padding:10px}.metric .k{font-size:.68rem;color:var(--muted);line-height:1.3}.metric .v{font-weight:950;font-size:1rem;margin-top:4px;font-variant-numeric:tabular-nums}.metric.wide{grid-column:1/-1}
+.pattern-support{font-size:.72rem;color:var(--muted);line-height:1.4;margin-top:5px}
+.chart-wrap{position:relative;border:1px solid var(--line);background:var(--surface2);border-radius:14px;padding:6px;overflow:hidden}
+#patternChart{display:block;width:100%;height:260px}
+.legend{display:flex;flex-wrap:wrap;gap:10px 14px;font-size:.70rem;color:var(--muted);margin-top:8px}
+.legend-item{display:flex;align-items:center;gap:6px}.legend-line{width:24px;border-top:3px solid var(--blue);position:relative}.legend-line:after{content:"";position:absolute;width:7px;height:7px;border-radius:50%;background:var(--surface2);border:2px solid var(--blue);left:8px;top:-6px}.legend-bar{width:9px;height:17px;border:2px solid var(--accent);border-radius:2px}.legend-dash{width:24px;border-top:2px dashed var(--amber)}
+.trend-copy{font-size:.78rem;color:var(--soft);margin-top:8px;line-height:1.4}
+.chart-details{margin-top:9px;display:none;background:var(--surface3);border-radius:var(--radius-control);padding:10px;border:1px solid var(--line);font-size:.78rem;line-height:1.5}.chart-details.show{display:block}
+.chart-details b{color:var(--text)}
+.history-toolbar{display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:10px}
+select,input,textarea{width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--line);border-radius:var(--radius-control);padding:10px}
+.entry{display:grid;grid-template-columns:54px 1fr auto;gap:9px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}.entry:last-child{border-bottom:0}
+.entry-num{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:var(--surface2);border:1px solid var(--line);font-weight:950}
+.entry-main{min-width:0}.entry-main .time{font-weight:900}.entry-main .meta{font-size:.74rem;color:var(--muted);margin-top:3px;line-height:1.4}.note-tag{font-size:.68rem;color:var(--blue);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.entry-actions button{border:0;background:transparent;color:var(--blue);font-weight:900}
+.summary-box{background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:12px;white-space:pre-wrap;font-size:.82rem;line-height:1.55}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.stack{display:grid;gap:8px}.action-btn{border:1px solid var(--line);background:var(--surface2);border-radius:var(--radius-control);padding:10px 12px;font-weight:850}
+.action-btn.primary{background:var(--accent);color:var(--accentText);border-color:var(--accent)}.action-btn.danger{color:var(--danger)}
+.field{display:grid;gap:6px;margin:10px 0}.field label{font-size:.74rem;font-weight:850;color:var(--muted)}
+.switch-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}.switch-row:last-child{border-bottom:0}.switch-row span{font-size:.82rem}.switch{width:52px;height:30px;border-radius:999px;border:1px solid var(--line);background:var(--surface2);padding:3px}.switch i{display:block;width:22px;height:22px;border-radius:50%;background:var(--muted);transform:translateX(0);transition:transform calc(.18s * var(--motion)) ease}.switch[aria-pressed="true"]{background:var(--accent)}.switch[aria-pressed="true"] i{background:var(--accentText);transform:translateX(20px)}
+.bottom-timer{position:fixed;left:0;right:0;bottom:0;z-index:10;background:linear-gradient(180deg,rgba(8,16,24,0),var(--bg) 18%);padding:18px 14px calc(env(safe-area-inset-bottom) + 10px)}
+.bottom-inner{width:min(100%,560px);margin:auto;display:grid;grid-template-columns:112px 1fr;gap:9px;align-items:stretch}
+.mini-timer{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-button);padding:10px;display:grid;align-content:center}.mini-timer .k{font-size:.64rem;color:var(--muted)}.mini-timer .v{font-size:1.2rem;font-weight:950;font-variant-numeric:tabular-nums;margin-top:2px}
+.timer-btn{border:0;border-radius:var(--radius-button);background:var(--accent);color:var(--accentText);font-size:1.05rem;font-weight:950;padding:12px 16px;box-shadow:var(--shadow)}
+.timer-btn.active{background:var(--danger);color:#31050c}
+dialog{width:min(calc(100% - 24px),520px);max-height:88dvh;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:20px;padding:0;box-shadow:0 30px 90px rgba(0,0,0,.5)}
+dialog::backdrop{background:rgba(0,0,0,.68)}
+.modal{padding:16px}.modal h2{font-size:1.1rem;margin:0 0 9px}.modal p,.modal li{font-size:.80rem;color:var(--soft);line-height:1.5}.modal-actions{display:flex;justify-content:flex-end;gap:7px;margin-top:14px}.modal-actions button{border:1px solid var(--line);background:var(--surface2);border-radius:12px;padding:9px 12px;font-weight:850}.modal-actions .primary{background:var(--accent);color:var(--accentText);border-color:var(--accent)}
+.help-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.help-actions button{border:0;border-radius:13px;padding:11px;font-weight:900}.help-actions .maternity{background:var(--accent);color:var(--accentText)}.help-actions .emergency{background:var(--danger);color:#31050c}
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.footer-note{font-size:.69rem;color:var(--muted);line-height:1.45;margin:14px 3px}
+
+.design-studio{margin-top:10px}
+.design-preview-live{border:1px solid var(--line);border-radius:var(--radius-card);padding:12px;background:var(--surface2);margin-bottom:12px}
+.preview-live-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+.preview-live-title{font-family:var(--font-display);font-weight:950}
+.preview-live-mini{display:grid;grid-template-columns:1fr 1.4fr;gap:8px}
+.preview-live-timer{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-control);padding:10px}
+.preview-live-timer .pv-time{font-size:1.45rem;font-weight:950;font-variant-numeric:tabular-nums}
+.preview-live-btn{background:var(--accent);color:var(--accentText);border-radius:var(--radius-button);display:grid;place-items:center;font-weight:950;padding:10px}
+.preview-live-chart{height:46px;display:flex;align-items:flex-end;gap:5px;margin-top:10px;padding:7px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-control)}
+.preview-live-chart i{display:block;width:12%;border:2px solid var(--accent);border-bottom-width:3px;border-radius:2px}
+.preview-live-chart i:nth-child(1){height:45%}.preview-live-chart i:nth-child(2){height:70%}.preview-live-chart i:nth-child(3){height:55%}.preview-live-chart i:nth-child(4){height:85%}.preview-live-chart i:nth-child(5){height:62%}
+.preset-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.preset-card{border:2px solid var(--line);background:var(--surface2);border-radius:16px;padding:10px;text-align:left;min-height:118px}
+.preset-card[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 25%, transparent)}
+.preset-top{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.preset-name{font-weight:950;font-size:.82rem}
+.preset-check{font-size:.72rem;color:var(--accent);font-weight:950}
+.mini-shell{margin-top:8px;border-radius:10px;padding:7px;border:1px solid rgba(127,127,127,.35)}
+.mini-row{display:grid;grid-template-columns:1fr 1.25fr;gap:5px}
+.mini-box{height:24px;border-radius:7px}.mini-button{height:24px;display:grid;place-items:center;font-size:.58rem;font-weight:900}
+.mini-bars{height:27px;display:flex;align-items:flex-end;gap:3px;margin-top:5px}.mini-bars span{width:10px;border-width:1px;border-style:solid}.mini-bars span:nth-child(1){height:14px}.mini-bars span:nth-child(2){height:23px}.mini-bars span:nth-child(3){height:18px}.mini-bars span:nth-child(4){height:25px}
+.preset-card[data-preset="calm"]{background:#162331;color:#f4f7fb}.preset-card[data-preset="calm"] .mini-shell{background:#101a25}.preset-card[data-preset="calm"] .mini-box{background:#1d2d3d}.preset-card[data-preset="calm"] .mini-button{background:#79d7c8;color:#04201b;border-radius:9px}.preset-card[data-preset="calm"] .mini-bars span{border-color:#79d7c8}
+.preset-card[data-preset="ocean"]{background:#14314b;color:#f3f8fc}.preset-card[data-preset="ocean"] .mini-shell{background:#0d2033}.preset-card[data-preset="ocean"] .mini-box{background:#1b405d}.preset-card[data-preset="ocean"] .mini-button{background:#6ec8ff;color:#031521;border-radius:5px}.preset-card[data-preset="ocean"] .mini-bars span{border-color:#6ec8ff}
+.preset-card[data-preset="warm"]{background:#34271f;color:#fff8ef;font-family:"Trebuchet MS",sans-serif}.preset-card[data-preset="warm"] .preset-name{font-family:Georgia,serif}.preset-card[data-preset="warm"] .mini-shell{background:#251c16;border-radius:16px}.preset-card[data-preset="warm"] .mini-box{background:#453328;border-radius:12px}.preset-card[data-preset="warm"] .mini-button{background:#e7a56d;color:#2b1204;border-radius:18px}.preset-card[data-preset="warm"] .mini-bars span{border-color:#e7a56d}
+.preset-card[data-preset="lavender"]{background:#2a223b;color:#fbf8ff;font-family:"Arial Rounded MT Bold",Arial,sans-serif}.preset-card[data-preset="lavender"] .mini-shell{background:#1c1729;border-radius:18px}.preset-card[data-preset="lavender"] .mini-box{background:#382d4f;border-radius:20px}.preset-card[data-preset="lavender"] .mini-button{background:#c7a7ff;color:#1d0d33;border-radius:999px}.preset-card[data-preset="lavender"] .mini-bars span{border-color:#c7a7ff;border-radius:3px}
+.preset-card[data-preset="mono"]{background:#101010;color:#fff;font-family:ui-monospace,monospace;border-color:#777}.preset-card[data-preset="mono"] .mini-shell{background:#000;border-radius:2px}.preset-card[data-preset="mono"] .mini-box{background:#1d1d1d;border-radius:1px}.preset-card[data-preset="mono"] .mini-button{background:#fff;color:#000;border-radius:1px}.preset-card[data-preset="mono"] .mini-bars span{border-color:#fff;border-radius:0}
+.design-meta{font-size:.68rem;color:var(--muted);line-height:1.4;margin-top:9px}
+@media(max-width:360px){.preset-grid{grid-template-columns:1fr}}
+
+
+/* V2.3 pain-intensity UX */
+.latest-pain-row{display:none;margin-top:10px;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--line);border-radius:var(--radius-control)}
+.latest-pain-row.show{display:flex}
+.latest-pain-main{min-width:0}.latest-pain-main .k{font-size:.70rem;color:var(--muted)}.latest-pain-main .v{font-size:.95rem;font-weight:900;margin-top:2px}
+.latest-pain-edit{border:0;background:transparent;color:var(--blue);font-weight:900;padding:6px 8px}
+
+.pain-capture{display:none;margin-top:10px;padding:11px;background:var(--surface2);border:1px solid var(--line);border-radius:var(--radius-control)}
+.pain-capture.show{display:block}
+.pain-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
+.pain-title{font-size:.82rem;font-weight:900}.pain-sub{font-size:.68rem;color:var(--muted);margin-top:2px}
+.pain-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.pain-choice{min-width:44px;min-height:44px;border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-control);font-weight:950}
+.pain-choice[aria-pressed="true"]{background:var(--accent);color:var(--accentText);border-color:var(--accent)}
+.pain-later{display:flex;justify-content:flex-end;margin-top:8px}.pain-later button{border:0;background:transparent;color:var(--blue);font-weight:900;padding:8px}
+.pain-scale-labels{display:flex;justify-content:space-between;gap:10px;font-size:.62rem;color:var(--muted);margin-top:6px}
+
+.pain-strip{display:none;margin-top:8px;border:1px solid var(--line);background:var(--surface2);border-radius:var(--radius-control);padding:8px}
+.pain-strip.show{display:block}
+.pain-strip-title{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:.68rem;color:var(--muted);margin-bottom:5px}
+#painChart{display:block;width:100%;height:86px}
+.pain-dot{display:inline-block;width:9px;height:9px;border-radius:50%;border:2px solid currentColor}
+
+.pain-badge{display:inline-flex;align-items:center;gap:5px;margin-left:5px;padding:2px 7px;border:1px solid var(--line);border-radius:999px;font-size:.66rem;color:var(--soft)}
+.entry-main .pain-line{font-size:.72rem;color:var(--soft);margin-top:3px}
+.summary-pain-note{font-size:.68rem;color:var(--muted);margin-top:8px;line-height:1.4}
+
+@media (prefers-reduced-motion:reduce){:root{--motion:0}*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+@media (min-width:700px){body{background:radial-gradient(circle at 50% -20%,#183047,var(--bg) 45%)}}
+</style>
 </head>
 <body>
 <div class="app">
-  <header>
-    <div class="brand">
-      <div class="logo">W</div>
-      <div><h1 data-i18n="appName">Wehentracker</h1><div class="sub">V1 · local & offline</div></div>
-    </div>
-    <div class="top-actions">
-      <select id="lang" class="lang" aria-label="Language">
-        <option value="de">DE</option><option value="en">EN</option><option value="zh">中文</option><option value="hi">हिन्दी</option>
-      </select>
-      <button class="icon-btn" id="settingsBtn" aria-label="Settings">⚙︎</button>
-    </div>
-  </header>
-
-  <section class="card status-card" id="statusCard">
-    <div class="eyebrow" data-i18n="pattern">Gemessenes Muster</div>
-    <div class="status-title" id="statusTitle">Noch keine Daten</div>
-    <div class="status-copy" id="statusCopy">Starte die erste Wehe, sobald sie beginnt.</div>
-    <div class="stats">
-      <div class="stat"><div class="k" data-i18n="lastDuration">Letzte Dauer</div><div class="v" id="lastDuration">—</div></div>
-      <div class="stat"><div class="k" data-i18n="lastInterval">Letzter Abstand</div><div class="v" id="lastInterval">—</div></div>
-      <div class="stat"><div class="k" data-i18n="avg5">Ø letzte 5</div><div class="v" id="avgInterval">—</div></div>
-    </div>
-    <div class="contact-buttons" id="contactButtons" hidden>
-      <button class="contact-btn" id="hospitalCallBtn" data-i18n="callMaternity">Geburtsstation anrufen</button>
-      <button class="contact-btn emergency" id="emergencyCallBtn" data-i18n="callEmergency">Notruf</button>
-    </div>
-  </section>
-
-  <section class="card">
-    <div class="tracker">
-      <div class="timer" id="timer">00:00</div>
-      <div class="timer-label" id="timerLabel" data-i18n="ready">Bereit</div>
-      <button class="main-btn" id="mainBtn" data-i18n="start">WEHE STARTEN</button>
-    </div>
-
-    <div class="quick-row">
-      <button class="quick" data-event="water"><span>💧</span><b data-i18n="water">Fruchtwasser</b></button>
-      <button class="quick" data-event="bleeding"><span>●</span><b data-i18n="bleeding">Blutung</b></button>
-      <button class="quick" data-event="movement"><span>↘</span><b data-i18n="movement">Bewegung ↓</b></button>
-      <button class="quick" data-event="push"><span>!</span><b data-i18n="pushUrge">Pressdrang</b></button>
-    </div>
-
-    <div class="actions">
-      <button class="secondary" id="undoBtn" data-i18n="undo">↶ Letzte löschen</button>
-      <button class="secondary" id="editBtn" data-i18n="editLast">Letzte bearbeiten</button>
-      <button class="secondary" id="newSessionBtn" data-i18n="newSession">Neue Session</button>
-    </div>
-  </section>
-
-  <section class="card">
-    <div class="section-head"><div><div class="section-title" data-i18n="intervalChart">Wehenabstand</div><div class="section-note" data-i18n="intervalStart">Start → Start · Minuten</div></div><span class="pill" id="regularityPill">—</span></div>
-    <canvas id="intervalCanvas"></canvas>
-    <div class="legend"><span><i class="dot" style="background:#38bdf8"></i><span data-i18n="interval">Abstand</span></span><span><i class="dot" style="background:#fbbf24"></i><span data-i18n="configuredThreshold">Konfigurierte Schwelle</span></span></div>
-  </section>
-
-  <section class="card">
-    <div class="section-head"><div><div class="section-title" data-i18n="durationChart">Wehendauer</div><div class="section-note" data-i18n="seconds">Sekunden</div></div><span class="pill" id="countPill">0</span></div>
-    <canvas id="durationCanvas"></canvas>
-    <div class="legend"><span><i class="dot" style="background:#5eead4"></i><span data-i18n="duration">Dauer</span></span><span><i class="dot" style="background:#fbbf24"></i><span data-i18n="customPlan">Individueller Plan</span></span></div>
-  </section>
-
-  <section class="card">
-    <div class="section-head"><div class="section-title" data-i18n="recent">Letzte Wehen</div><button class="secondary" id="exportBtn" style="min-height:34px;padding:0 10px" data-i18n="export">Export CSV</button></div>
-    <div class="history" id="history"></div>
-  </section>
-
-  <div class="notice">
-    <strong data-i18n="important">Wichtig:</strong>
-    <span data-i18n="disclaimer">Diese App misst Zeiten und zeigt Muster. Sie kann weder Muttermundöffnung noch Geburtsphase diagnostizieren und ersetzt keine Hebamme, Ärztin/Arzt oder Geburtsstation. Bei Unsicherheit immer die Geburtsstation kontaktieren.</span>
+<header class="topbar">
+  <div class="brand"><div class="mark" aria-hidden="true">C</div><div><h1>ConTrack</h1><div class="sub" data-i18n="tagline">Contraction timer · local & offline</div></div></div>
+  <div class="top-actions">
+    <select id="quickLanguage" class="quick-lang" aria-label="Language">
+      <option value="en">🇬🇧 EN</option>
+      <option value="de">🇩🇪 DE</option>
+      <option value="fr">🇫🇷 FR</option>
+      <option value="es">🇪🇸 ES</option>
+      <option value="fa">🇮🇷 FA</option>
+      <option value="zh">🇨🇳 中文</option>
+      <option value="hi">🇮🇳 हिन्दी</option>
+      <option value="ar">🇸🇦 AR</option>
+      <option value="ru">🇷🇺 RU</option>
+      <option value="ko">🇰🇷 KO</option>
+      <option value="ja">🇯🇵 JA</option>
+    </select>
+    <button id="helpBtn" class="help-btn" aria-label="Urgent symptoms / help">!</button>
   </div>
+</header>
 
-  <section class="card">
-    <div class="section-title" data-i18n="safetyBasis">Safety-Basis in V1</div>
-    <div class="source" data-i18n="safetyText">Dringender Kontakt bei Fruchtwasserabgang, vaginaler Blutung, deutlich weniger Kindsbewegungen, vermuteten Wehen vor 37 SSW, Wehen über 2 Minuten oder ≥6 Wehen in 10 Minuten. Bei starkem Pressdrang und unmittelbar erwarteter Geburt: lokaler Notruf.</div>
-    <div class="source">
-      NHS: <a href="https://www.nhs.uk/pregnancy/labour-and-birth/signs-that-labour-has-begun/" target="_blank" rel="noopener">Signs that labour has begun</a><br>
-      March of Dimes: <a href="https://www2.marchofdimes.org/find-support/topics/birth/contractions-and-signs-labor" target="_blank" rel="noopener">Contractions and signs of labor</a>
+<nav class="nav" aria-label="Primary">
+  <button data-view="track" aria-selected="true" data-i18n="track">Track</button>
+  <button data-view="history" aria-selected="false" data-i18n="history">History</button>
+  <button data-view="summary" aria-selected="false" data-i18n="summary">Summary</button>
+  <button data-view="settings" aria-selected="false" data-i18n="settings">Settings</button>
+</nav>
+
+<main>
+<section id="view-track" class="view">
+  <section class="card hero" id="hero">
+    <div class="state-row">
+      <div>
+        <div class="live-time" id="heroTimer">00:00</div>
+        <div class="live-label" id="heroHelper" data-i18n="readyToRecord">Ready to record</div>
+      </div>
+      <div class="pulse"><i aria-hidden="true"></i><span id="stateText" data-i18n="idle">Idle</span></div>
+    </div>
+
+    <div class="primary-facts">
+      <div class="fact"><div class="k" data-i18n="latestDuration">Latest duration</div><div class="v" id="latestDuration">Not enough data</div></div>
+      <div class="fact"><div class="k" data-i18n="latestInterval">Latest interval</div><div class="v" id="latestInterval">Not enough data</div></div>
+      <div class="fact"><div class="k" data-i18n="restTime">Rest time</div><div class="v" id="restTime">Not enough data</div></div>
+      <div class="fact"><div class="k" data-i18n="latestStart">Latest start</div><div class="v small" id="latestStart">Not enough data</div></div>
+    </div>
+    <div class="latest-pain-row" id="latestPainRow">
+      <div class="latest-pain-main">
+        <div class="k" data-i18n="latestPain">Latest pain intensity</div>
+        <div class="v" id="latestPainValue">Not rated</div>
+      </div>
+      <button class="latest-pain-edit" id="latestPainEdit" data-i18n="edit">Edit</button>
+    </div>
+    <div class="tip" id="threeTip" data-i18n="needThree">Record at least 3 contractions to view a clearer pattern.</div>
+    <div class="snackbar" id="undoBar" role="status" aria-live="polite">
+      <div class="msg" id="undoMsg">Saved</div>
+      <div class="actions"><button class="link-btn" id="undoBtn" data-i18n="undo">Undo</button><button class="link-btn" id="quickEditBtn" data-i18n="edit">Edit</button></div>
+    </div>
+    <div class="pain-capture" id="painCapture" aria-live="polite">
+      <div class="pain-head">
+        <div><div class="pain-title" data-i18n="painQuestion">How intense was this contraction?</div><div class="pain-sub" data-i18n="painOptional">Optional · you can add or change this later.</div></div>
+      </div>
+      <div class="pain-grid" id="painQuickGrid"></div>
+      <div class="pain-scale-labels"><span data-i18n="painZero">0 · No pain</span><span data-i18n="painTen">10 · Worst imaginable</span></div>
+      <div class="pain-later"><button id="painLaterBtn" data-i18n="later">Later</button></div>
     </div>
   </section>
+
+
+  <section class="card">
+    <div class="section-head"><div><div class="section-title" data-i18n="contractionPattern">Contraction pattern</div><div class="section-note" data-i18n="sharedAxis">Duration + start-to-start interval on one time axis</div></div></div>
+    <div class="chips" id="chartChips" aria-label="Chart time window"></div>
+    <div class="chart-wrap" style="margin-top:8px">
+      <svg id="patternChart" role="img" aria-labelledby="chartTitle chartDesc" viewBox="0 0 520 260" preserveAspectRatio="none">
+        <title id="chartTitle">Contraction pattern chart</title>
+        <desc id="chartDesc">Intervals shown as a line with circular points and durations shown as outlined vertical bars.</desc>
+      </svg>
+    </div>
+    <div class="legend">
+      <span class="legend-item"><i class="legend-line" aria-hidden="true"></i><span data-i18n="intervalLegend">Interval · minutes between starts</span></span>
+      <span class="legend-item"><i class="legend-bar" aria-hidden="true"></i><span data-i18n="durationLegend">Duration · seconds</span></span>
+      <span class="legend-item" id="avgLegend"><i class="legend-dash" aria-hidden="true"></i><span data-i18n="rollingAverage">Rolling interval average</span></span>
+    </div>
+    <div class="trend-copy" id="trendCopy">Not enough data to describe a trend.</div>
+    <div class="chart-details" id="chartDetails"></div>
+    <div class="pain-strip" id="painStrip">
+      <div class="pain-strip-title"><span data-i18n="painIntensity">Pain intensity</span><span data-i18n="painSubjective">Subjective 0–10 rating</span></div>
+      <svg id="painChart" role="img" aria-labelledby="painChartTitle painChartDesc" viewBox="0 0 520 86" preserveAspectRatio="none">
+        <title id="painChartTitle">Pain intensity</title><desc id="painChartDesc">Optional user-entered pain intensity ratings from 0 to 10 aligned to contraction start times.</desc>
+      </svg>
+    </div>
+    <div class="tip" data-i18n="lowerMeansCloser">Lower interval values mean less time between contraction starts.</div>
+    <div id="chartA11y" class="sr-only" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <div class="section-head"><div><div class="section-title" data-i18n="patternSnapshot">Pattern snapshot</div><div class="section-note" data-i18n="factualTimingOnly">Factual timing only · no labor-stage assessment</div></div></div>
+    <div class="chips" id="kpiChips" aria-label="KPI time window"></div>
+    <div class="snapshot" style="margin-top:9px">
+      <div class="metric"><div class="k" data-i18n="contractionsWindow">Contractions in window</div><div class="v" id="kpiCount">Not enough data</div></div>
+      <div class="metric"><div class="k" data-i18n="avgDuration">Average duration</div><div class="v" id="kpiAvgDuration">Not enough data</div></div>
+      <div class="metric"><div class="k" data-i18n="avgInterval">Average interval</div><div class="v" id="kpiAvgInterval">Not enough data</div></div>
+      <div class="metric"><div class="k" data-i18n="intervalRange">Interval range</div><div class="v" id="kpiRange">Not enough data</div></div>
+      <div class="metric wide"><div class="k" data-i18n="pattern">Pattern</div><div class="v" id="kpiPattern">Not enough data</div><div class="pattern-support" data-i18n="regularitySupport">Based on variation in recorded intervals; this does not assess labor progress.</div></div>
+    </div>
+  </section>
+
+</section>
+
+<section id="view-history" class="view" hidden>
+  <section class="card">
+    <div class="section-head"><div><div class="section-title" data-i18n="historyRegister">History register</div><div class="section-note" data-i18n="historyHelp">Review, correct, note, or delete any entry.</div></div></div>
+    <div class="history-toolbar"><select id="sessionSelect" aria-label="Session"></select><button id="newSessionBtn" class="action-btn" data-i18n="newSession">New session</button></div>
+    <div id="historyList"></div>
+  </section>
+</section>
+
+<section id="view-summary" class="view" hidden>
+  <section class="card">
+    <div class="section-head"><div><div class="section-title" data-i18n="factualSummary">Factual summary</div><div class="section-note" data-i18n="summaryHelp">Designed to communicate recorded timing to a maternity team.</div></div></div>
+    <div class="summary-box" id="summaryBox"></div>
+    <div class="grid2" style="margin-top:10px">
+      <button class="action-btn primary" id="copySummaryBtn" data-i18n="copySummary">Copy summary</button>
+      <button class="action-btn" id="shareSummaryBtn" data-i18n="share">Share</button>
+      <button class="action-btn" id="exportCsvBtn" data-i18n="exportCsv">Export CSV</button>
+      <button class="action-btn" id="exportJsonBtn" data-i18n="exportJson">Export JSON</button>
+    </div>
+  </section>
+</section>
+
+<section id="view-settings" class="view" hidden>
+  <section class="card design-studio">
+    <div class="section-head">
+      <div>
+        <div class="section-title" data-i18n="designStudio">Design Studio</div>
+        <div class="section-note" data-i18n="designStudioHelp">Choose a visual style. Changes apply instantly and stay local on this device.</div>
+      </div>
+    </div>
+
+    <div class="design-preview-live" aria-label="Live design preview">
+      <div class="preview-live-head"><div class="preview-live-title">ConTrack</div><div class="section-note" id="liveDesignName">Calm Mint</div></div>
+      <div class="preview-live-mini">
+        <div class="preview-live-timer"><div class="section-note" data-i18n="latestDuration">Latest duration</div><div class="pv-time">00:58</div></div>
+        <div class="preview-live-btn" data-i18n="startContraction">Start contraction</div>
+      </div>
+      <div class="preview-live-chart" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+
+    <div class="preset-grid" id="presetGrid">
+      <button class="preset-card" data-preset="calm" aria-pressed="true" type="button">
+        <div class="preset-top"><span class="preset-name">Calm Mint</span><span class="preset-check">✓</span></div>
+        <div class="mini-shell"><div class="mini-row"><div class="mini-box"></div><div class="mini-button">START</div></div><div class="mini-bars"><span></span><span></span><span></span><span></span></div></div>
+      </button>
+      <button class="preset-card" data-preset="ocean" aria-pressed="false" type="button">
+        <div class="preset-top"><span class="preset-name">Ocean Focus</span><span class="preset-check"></span></div>
+        <div class="mini-shell"><div class="mini-row"><div class="mini-box"></div><div class="mini-button">START</div></div><div class="mini-bars"><span></span><span></span><span></span><span></span></div></div>
+      </button>
+      <button class="preset-card" data-preset="warm" aria-pressed="false" type="button">
+        <div class="preset-top"><span class="preset-name">Warm Nest</span><span class="preset-check"></span></div>
+        <div class="mini-shell"><div class="mini-row"><div class="mini-box"></div><div class="mini-button">START</div></div><div class="mini-bars"><span></span><span></span><span></span><span></span></div></div>
+      </button>
+      <button class="preset-card" data-preset="lavender" aria-pressed="false" type="button">
+        <div class="preset-top"><span class="preset-name">Lavender Soft</span><span class="preset-check"></span></div>
+        <div class="mini-shell"><div class="mini-row"><div class="mini-box"></div><div class="mini-button">START</div></div><div class="mini-bars"><span></span><span></span><span></span><span></span></div></div>
+      </button>
+      <button class="preset-card" data-preset="mono" aria-pressed="false" type="button">
+        <div class="preset-top"><span class="preset-name">Mono High Contrast</span><span class="preset-check"></span></div>
+        <div class="mini-shell"><div class="mini-row"><div class="mini-box"></div><div class="mini-button">START</div></div><div class="mini-bars"><span></span><span></span><span></span><span></span></div></div>
+      </button>
+    </div>
+    <div class="design-meta" data-i18n="designMeta">Each preset changes palette, corner geometry, typography and chart/button styling. Dark/Light/Auto still work independently.</div>
+  </section>
+
+  <section class="card">
+    <div class="section-title" data-i18n="displayAccess">Display & accessibility</div>
+    <div class="field"><label for="language" data-i18n="language">Language</label><select id="language">
+<option value="en">🇬🇧 English</option>
+<option value="de">🇩🇪 Deutsch</option>
+<option value="fr">🇫🇷 Français</option>
+<option value="es">🇪🇸 Español</option>
+<option value="fa">🇮🇷 فارسی</option>
+<option value="zh">🇨🇳 中文</option>
+<option value="hi">🇮🇳 हिन्दी</option>
+<option value="ar">🇸🇦 العربية</option>
+<option value="ru">🇷🇺 Русский</option>
+<option value="ko">🇰🇷 한국어</option>
+<option value="ja">🇯🇵 日本語</option>
+</select></div>
+    <div class="field"><label for="theme" data-i18n="theme">Theme</label><select id="theme"><option value="auto" data-i18n="auto">Auto</option><option value="dark" data-i18n="dark">Dark</option><option value="light" data-i18n="light">Light</option></select></div>
+    <div class="field"><label for="textSize" data-i18n="textSize">Text size</label><select id="textSize"><option value="normal" data-i18n="normal">Normal</option><option value="large" data-i18n="large">Large</option><option value="xl" data-i18n="extraLarge">Extra large</option></select></div>
+    <div class="switch-row"><span data-i18n="haptics">Haptic feedback</span><button class="switch" id="hapticsToggle" aria-pressed="true" aria-label="Haptic feedback"><i></i></button></div>
+    <div class="switch-row"><span data-i18n="rollingAvgSetting">Show rolling interval average</span><button class="switch" id="rollingToggle" aria-pressed="false" aria-label="Show rolling average"><i></i></button></div>
+    <div class="switch-row"><span data-i18n="showPainChart">Show pain ratings under chart</span><button class="switch" id="painChartToggle" aria-pressed="true" aria-label="Show pain ratings under chart"><i></i></button></div>
+    <div class="switch-row"><span data-i18n="reduceMotion">Reduce motion</span><button class="switch" id="motionToggle" aria-pressed="false" aria-label="Reduce motion"><i></i></button></div>
+  </section>
+
+  <section class="card">
+    <div class="section-title" data-i18n="contactDetails">Contact details</div>
+    <div class="field"><label for="maternityPhone" data-i18n="maternityPhone">Maternity team phone</label><input id="maternityPhone" type="tel" inputmode="tel" autocomplete="tel"></div>
+    <div class="field"><label for="emergencyPhone" data-i18n="emergencyPhone">Local emergency number</label><input id="emergencyPhone" type="tel" inputmode="tel"></div>
+    <button class="action-btn primary" id="saveSettingsBtn" data-i18n="saveSettings">Save settings</button>
+  </section>
+
+  <section class="card">
+    <div class="section-title" data-i18n="dataControl">Your data</div>
+    <p class="section-note" data-i18n="localOnly">Contraction data is stored locally on this device. No account or cloud sync is used.</p>
+    <div class="stack" style="margin-top:10px">
+      <button class="action-btn" id="exportAllBtn" data-i18n="exportAll">Export all data (JSON)</button>
+      <button class="action-btn danger" id="deleteSessionBtn" data-i18n="deleteSession">Delete selected session</button>
+      <button class="action-btn danger" id="deleteAllBtn" data-i18n="deleteAll">Delete all local data</button>
+    </div>
+  </section>
+</section>
+
+<div class="footer-note" data-i18n="disclaimer">ConTrack records timing and notes. It does not diagnose labor, determine cervical dilation, predict labor stage, or replace professional medical advice.</div>
+</main>
 </div>
 
-<div class="offline" id="offlineBadge">Offline</div>
-
-<dialog id="settingsDialog"><form method="dialog" class="modal" id="settingsForm">
-  <h2 data-i18n="settings">Einstellungen</h2>
-  <div class="grid2">
-    <div class="field"><label data-i18n="gestWeek">Schwangerschaftswoche</label><input id="gestWeek" type="number" min="20" max="43" step="0.1" placeholder="z. B. 39.2"></div>
-    <div class="field"><label data-i18n="intervalThreshold">Kontakt-Abstand (min)</label><input id="intervalThreshold" type="number" min="2" max="15" step="0.5"></div>
+<div class="bottom-timer" aria-live="polite">
+  <div class="bottom-inner">
+    <div class="mini-timer"><div class="k" id="miniLabel" data-i18n="restTime">Rest time</div><div class="v" id="miniTimer">00:00</div></div>
+    <button id="timerBtn" class="timer-btn" data-i18n="startContraction">Start contraction</button>
   </div>
-  <div class="grid2">
-    <div class="field"><label data-i18n="durationThreshold">Plan-Dauer (sec)</label><input id="durationThreshold" type="number" min="20" max="120" step="5"></div>
-    <div class="field"><label data-i18n="persistenceThreshold">Plan-Zeitraum (min)</label><input id="persistenceThreshold" type="number" min="15" max="180" step="5"></div>
-  </div>
-  <div class="field"><label data-i18n="maternityPhone">Telefon Geburtsstation</label><input id="maternityPhone" type="tel" inputmode="tel" placeholder="+86 …"></div>
-  <div class="field"><label data-i18n="emergencyPhone">Lokale Notrufnummer</label><input id="emergencyPhone" type="tel" inputmode="tel" placeholder="z. B. 120"></div>
-  <p data-i18n="ruleNote">Die 5/1/1-Werte sind nur ein konfigurierbarer persönlicher Plan. Die App verzögert bei regelmäßigen Wehen im eingestellten Kontakt-Abstand keine Kontakt-Empfehlung.</p>
-  <div class="modal-actions"><button value="cancel" data-i18n="cancel">Abbrechen</button><button class="primary" value="default" id="saveSettings" data-i18n="save">Speichern</button></div>
-  <div class="danger-zone"><button type="button" id="eraseAll" data-i18n="eraseAll">Alle lokalen Daten löschen</button></div>
-</form></dialog>
+</div>
 
-<dialog id="editDialog"><form method="dialog" class="modal">
-  <h2 data-i18n="editContraction">Wehe bearbeiten</h2>
-  <div class="field"><label data-i18n="startTime">Start</label><input id="editStart" type="datetime-local" step="1"></div>
-  <div class="field"><label data-i18n="endTime">Ende</label><input id="editEnd" type="datetime-local" step="1"></div>
-  <div class="modal-actions"><button value="cancel" data-i18n="cancel">Abbrechen</button><button class="primary" value="default" id="saveEdit" data-i18n="save">Speichern</button></div>
-</form></dialog>
+<dialog id="helpDialog">
+  <div class="modal">
+    <h2 data-i18n="urgentHelp">Urgent symptoms / help</h2>
+    <p data-i18n="helpCopy">If you are worried about symptoms or feel you need assessment, contact your maternity team. If you think there is immediate danger, or birth seems imminent and you cannot safely travel, call local emergency services.</p>
+    <p data-i18n="notExhaustive">This tool does not screen for urgent symptoms and the examples above are not a substitute for clinical advice.</p>
+    <div class="help-actions">
+      <button class="maternity" id="callMaternityBtn" data-i18n="callMaternity">Call maternity team</button>
+      <button class="emergency" id="callEmergencyBtn" data-i18n="callEmergency">Call emergency</button>
+    </div>
+    <div class="modal-actions"><button id="closeHelpBtn" data-i18n="close">Close</button></div>
+  </div>
+</dialog>
+
+<dialog id="editDialog">
+  <form method="dialog" class="modal" id="editForm">
+    <h2 data-i18n="editEntry">Edit contraction</h2>
+    <div class="field"><label for="editStart" data-i18n="startTime">Start time</label><input id="editStart" type="datetime-local" step="1"></div>
+    <div class="field"><label for="editEnd" data-i18n="endTime">End time</label><input id="editEnd" type="datetime-local" step="1"></div>
+    <div class="field"><label for="editPain" data-i18n="painIntensity">Pain intensity</label>
+      <select id="editPain">
+        <option value="" data-i18n="notRated">Not rated</option>
+        <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        <option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option>
+      </select>
+    </div>
+    <div class="field"><label for="editNote" data-i18n="noteOptional">Note (optional)</label><textarea id="editNote" rows="3" maxlength="280"></textarea></div>
+    <div class="modal-actions"><button value="cancel" data-i18n="cancel">Cancel</button><button class="primary" id="saveEditBtn" value="default" data-i18n="save">Save</button></div>
+  </form>
+</dialog>
 
 <script>
 (()=>{"use strict";
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const STORAGE="wehentracker_v1_state";
-const defaultState={
-  language:"de", runningStart:null,
-  session:{id:Date.now(),startedAt:Date.now(),contractions:[],events:[]},
-  settings:{gestWeek:"",intervalThreshold:5,durationThreshold:60,persistenceThreshold:60,maternityPhone:"",emergencyPhone:""}
-};
-let state=load(), timerId=null, wakeLock=null, editId=null;
+const KEY="contrack_v2_state", V1KEY="wehentracker_v1_state";
+const windows=[30,60,90,120,180,240], chartWindows=[30,60,90,120,180,240,"all"];
+const uid=()=>crypto.randomUUID?.()||`${Date.now()}-${Math.random().toString(16).slice(2)}`;
+const baseState=()=>({
+  version:2, language:"en", activeView:"track", runningStart:null, undo:null,
+  selectedKpi:60, selectedChart:60, selectedSessionId:null,
+  settings:{theme:"auto",design:"calm",textSize:"normal",haptics:true,rollingAverage:false,showPainChart:true,reduceMotion:false,maternityPhone:"",emergencyPhone:""},
+  sessions:[{id:uid(),startedAt:Date.now(),endedAt:null,contractions:[]}]
+});
+let state=loadState(), timerId=null, undoTimer=null, wakeLock=null, editingId=null;
+normalizeAllContractions();
+save();
 
-const T={
-de:{
- appName:"Wehentracker",pattern:"Gemessenes Muster",lastDuration:"Letzte Dauer",lastInterval:"Letzter Abstand",avg5:"Ø letzte 5",
- ready:"Bereit",start:"WEHE STARTEN",stop:"WEHE BEENDEN",water:"Fruchtwasser",bleeding:"Blutung",movement:"Bewegung ↓",pushUrge:"Pressdrang",
- undo:"↶ Letzte löschen",editLast:"Letzte bearbeiten",newSession:"Neue Session",intervalChart:"Wehenabstand",intervalStart:"Start → Start · Minuten",
- interval:"Abstand",configuredThreshold:"Konfigurierte Schwelle",durationChart:"Wehendauer",seconds:"Sekunden",duration:"Dauer",customPlan:"Individueller Plan",
- recent:"Letzte Wehen",export:"Export CSV",important:"Wichtig:",disclaimer:"Diese App misst Zeiten und zeigt Muster. Sie kann weder Muttermundöffnung noch Geburtsphase diagnostizieren und ersetzt keine Hebamme, Ärztin/Arzt oder Geburtsstation. Bei Unsicherheit immer die Geburtsstation kontaktieren.",
- safetyBasis:"Safety-Basis in V1",safetyText:"Dringender Kontakt bei Fruchtwasserabgang, vaginaler Blutung, deutlich weniger Kindsbewegungen, vermuteten Wehen vor 37 SSW, Wehen über 2 Minuten oder ≥6 Wehen in 10 Minuten. Bei starkem Pressdrang und unmittelbar erwarteter Geburt: lokaler Notruf.",
- settings:"Einstellungen",gestWeek:"Schwangerschaftswoche",intervalThreshold:"Kontakt-Abstand (min)",durationThreshold:"Plan-Dauer (sec)",persistenceThreshold:"Plan-Zeitraum (min)",
- maternityPhone:"Telefon Geburtsstation",emergencyPhone:"Lokale Notrufnummer",ruleNote:"Die 5/1/1-Werte sind nur ein konfigurierbarer persönlicher Plan. Die App verzögert bei regelmäßigen Wehen im eingestellten Kontakt-Abstand keine Kontakt-Empfehlung.",
- cancel:"Abbrechen",save:"Speichern",eraseAll:"Alle lokalen Daten löschen",editContraction:"Wehe bearbeiten",startTime:"Start",endTime:"Ende",callMaternity:"Geburtsstation anrufen",callEmergency:"Notruf",
- noData:"Noch keine Daten",noDataCopy:"Starte die erste Wehe, sobald sie beginnt.",oneRecorded:"Erste Wehe erfasst",oneCopy:"Für einen Abstand werden mindestens zwei Wehen benötigt.",
- observe:"Beobachten",observeCopy:"Noch kein regelmäßiges häufiges Muster erkannt. Verlauf weiter erfassen und bei Unsicherheit die Geburtsstation kontaktieren.",
- increasing:"Regelmäßiger werdend",increasingCopy:"Das Muster wird regelmäßiger oder die Abstände werden kürzer. Vorbereitung und individuellen Geburtsplan beachten.",
- contact:"Geburtsstation kontaktieren",contactCopy:"Regelmäßige Wehen liegen ungefähr im eingestellten Kontakt-Abstand. Geburtsstation/Hebamme jetzt kontaktieren.",
- urgent:"Dringend Kontakt aufnehmen",urgentCopy:"Ein Safety-Kriterium ist aktiv. Nicht auf weitere Tracker-Werte warten; Geburtsstation/Hebamme jetzt kontaktieren.",
- emergency:"Notfall",emergencyCopy:"Starker Pressdrang / unmittelbar erwartete Geburt wurde markiert. Lokalen Rettungsdienst kontaktieren.",
- preterm:"Unter 37 SSW + Wehenzeichen",longContraction:"Wehe länger als 2 Minuten",sixInTen:"≥6 Wehen in 10 Minuten",waterReason:"Fruchtwasserabgang",bleedingReason:"Vaginale Blutung",movementReason:"Deutlich weniger Kindsbewegungen",
- running:"Wehe läuft",regularity:"Regelmäßigkeit",high:"hoch",medium:"mittel",low:"niedrig",count:"Wehen",confirmNew:"Neue Session starten? Die aktuelle Session bleibt lokal gespeichert, wird aber nicht weiter angezeigt.",confirmErase:"Wirklich alle lokalen Wehen- und Einstellungsdaten löschen?",invalidEdit:"Ende muss nach dem Start liegen.",noPhone:"Bitte Telefonnummer in Einstellungen hinterlegen.",eventSaved:"Ereignis gespeichert",offline:"Offline"
-},
+const I={
 en:{
- appName:"Contraction Tracker",pattern:"Observed pattern",lastDuration:"Last duration",lastInterval:"Last interval",avg5:"Avg last 5",
- ready:"Ready",start:"START CONTRACTION",stop:"END CONTRACTION",water:"Waters",bleeding:"Bleeding",movement:"Movement ↓",pushUrge:"Urge to push",
- undo:"↶ Delete last",editLast:"Edit last",newSession:"New session",intervalChart:"Contraction interval",intervalStart:"Start → start · minutes",
- interval:"Interval",configuredThreshold:"Configured threshold",durationChart:"Contraction duration",seconds:"Seconds",duration:"Duration",customPlan:"Personal plan",
- recent:"Recent contractions",export:"Export CSV",important:"Important:",disclaimer:"This app records timing and shows patterns. It cannot diagnose cervical dilation or labour stage and does not replace a midwife, clinician or maternity unit. If unsure, contact your maternity unit.",
- safetyBasis:"V1 safety basis",safetyText:"Urgent contact for waters breaking, vaginal bleeding, clearly reduced fetal movement, suspected labour before 37 weeks, contractions lasting over 2 minutes, or ≥6 contractions in 10 minutes. With a strong urge to push and birth seeming imminent: call local emergency services.",
- settings:"Settings",gestWeek:"Gestational week",intervalThreshold:"Contact interval (min)",durationThreshold:"Plan duration (sec)",persistenceThreshold:"Plan period (min)",
- maternityPhone:"Maternity unit phone",emergencyPhone:"Local emergency number",ruleNote:"The 5/1/1 values are only a configurable personal plan. The app does not delay its contact recommendation when regular contractions reach the configured contact interval.",
- cancel:"Cancel",save:"Save",eraseAll:"Erase all local data",editContraction:"Edit contraction",startTime:"Start",endTime:"End",callMaternity:"Call maternity unit",callEmergency:"Emergency call",
- noData:"No data yet",noDataCopy:"Start the first contraction when it begins.",oneRecorded:"First contraction recorded",oneCopy:"At least two contractions are needed to calculate an interval.",
- observe:"Observe",observeCopy:"No regular frequent pattern detected yet. Keep recording and contact your maternity unit whenever you are unsure.",
- increasing:"Becoming more regular",increasingCopy:"The pattern is becoming more regular or intervals are shortening. Prepare and follow your individual birth plan.",
- contact:"Contact maternity unit",contactCopy:"Regular contractions are approximately at the configured contact interval. Contact your maternity unit/midwife now.",
- urgent:"Urgent contact",urgentCopy:"A safety criterion is active. Do not wait for more tracker data; contact your maternity unit/midwife now.",
- emergency:"Emergency",emergencyCopy:"A strong urge to push / imminent birth was marked. Contact local emergency services.",
- preterm:"Under 37 weeks + labour signs",longContraction:"Contraction longer than 2 minutes",sixInTen:"≥6 contractions in 10 minutes",waterReason:"Waters broken",bleedingReason:"Vaginal bleeding",movementReason:"Clearly reduced fetal movement",
- running:"Contraction running",regularity:"Regularity",high:"high",medium:"medium",low:"low",count:"Contractions",confirmNew:"Start a new session? The current session remains stored locally but will no longer be shown.",confirmErase:"Really erase all local contraction and settings data?",invalidEdit:"End must be after start.",noPhone:"Please add a phone number in Settings.",eventSaved:"Event saved",offline:"Offline"
+tagline:"Contraction timer · local & offline",urgentHelp:"Urgent symptoms / help",track:"Track",history:"History",summary:"Summary",settings:"Settings",
+designStudio:"Design Studio",designStudioHelp:"Choose a visual style. Changes apply instantly and stay local on this device.",designMeta:"Each preset changes palette, corner geometry, typography and chart/button styling. Dark/Light/Auto still work independently.",
+latestPain:"Latest pain intensity",painQuestion:"How intense was this contraction?",painOptional:"Optional · you can add or change this later.",painZero:"0 · No pain",painTen:"10 · Worst imaginable",later:"Later",painIntensity:"Pain intensity",painSubjective:"Subjective 0–10 rating",notRated:"Not rated",showPainChart:"Show pain ratings under chart",ratedContractions:"Rated contractions",painRange:"Pain range",painNote:"Pain ratings are subjective user-entered values and are shown only as recorded.",
+readyToRecord:"Ready to record",idle:"Idle",timing:"Timing",tapWhenEnds:"Tap when the contraction ends.",latestDuration:"Latest duration",latestInterval:"Latest interval",restTime:"Rest time",latestStart:"Latest start",
+needThree:"Record at least 3 contractions to view a clearer pattern.",patternSnapshot:"Pattern snapshot",factualTimingOnly:"Factual timing only · no labor-stage assessment",
+contractionsWindow:"Contractions in window",avgDuration:"Average duration",avgInterval:"Average interval",intervalRange:"Interval range",pattern:"Pattern",
+regularitySupport:"Based on variation in recorded intervals; this does not assess labor progress.",contractionPattern:"Contraction pattern",sharedAxis:"Duration + start-to-start interval on one time axis",
+intervalLegend:"Interval · minutes between starts",durationLegend:"Duration · seconds",rollingAverage:"Rolling interval average",lowerMeansCloser:"Lower interval values mean less time between contraction starts.",
+historyRegister:"History register",historyHelp:"Review, correct, note, or delete any entry.",newSession:"New session",factualSummary:"Factual summary",summaryHelp:"Designed to communicate recorded timing to a maternity team.",
+copySummary:"Copy summary",share:"Share",exportCsv:"Export CSV",exportJson:"Export JSON",displayAccess:"Display & accessibility",language:"Language",theme:"Theme",auto:"Auto",dark:"Dark",light:"Light",
+textSize:"Text size",normal:"Normal",large:"Large",extraLarge:"Extra large",haptics:"Haptic feedback",rollingAvgSetting:"Show rolling interval average",reduceMotion:"Reduce motion",
+contactDetails:"Contact details",maternityPhone:"Maternity team phone",emergencyPhone:"Local emergency number",saveSettings:"Save settings",dataControl:"Your data",
+localOnly:"Contraction data is stored locally on this device. No account or cloud sync is used.",exportAll:"Export all data (JSON)",deleteSession:"Delete selected session",deleteAll:"Delete all local data",
+disclaimer:"ConTrack records timing and notes. It does not diagnose labor, determine cervical dilation, predict labor stage, or replace professional medical advice.",
+startContraction:"Start contraction",endContraction:"End contraction",helpCopy:"If you are worried about symptoms or feel you need assessment, contact your maternity team. If you think there is immediate danger, or birth seems imminent and you cannot safely travel, call local emergency services.",
+notExhaustive:"This tool does not screen for urgent symptoms and the examples above are not a substitute for clinical advice.",callMaternity:"Call maternity team",callEmergency:"Call emergency",close:"Close",
+editEntry:"Edit contraction",startTime:"Start time",endTime:"End time",noteOptional:"Note (optional)",cancel:"Cancel",save:"Save",undo:"Undo",edit:"Edit",saved:"Contraction saved",
+notEnough:"Not enough data",mostlyRegular:"Mostly regular",variable:"Variable",becomingRegular:"Becoming more regular",shortened:"Intervals have shortened over the selected period.",variableTrend:"Intervals remain variable over the selected period.",stableTrend:"Intervals are broadly similar over the selected period.",notEnoughTrend:"Not enough data to describe a trend.",
+contractions:"contractions",inLast:"in the last",minutes:"min",all:"All",session:"Session",current:"Current",duration:"Duration",interval:"Interval",rest:"Rest",start:"Start",end:"End",note:"Note",delete:"Delete",
+confirmDeleteEntry:"Delete this contraction?",confirmNewSession:"Start a new session? The current timer history will remain available.",confirmDeleteSession:"Delete the selected session and all of its contractions?",confirmDeleteAll:"Delete ALL local ConTrack data? This cannot be undone.",
+invalidTimes:"End time must be after start time.",phoneMissing:"Add the phone number in Settings first.",copied:"Summary copied.",shareFailed:"Sharing is not available here. The summary has been copied instead.",
+summaryTitle:"Contraction timing summary",sessionStarted:"Session started",latestRecorded:"Latest recorded contraction",recordedCount:"Recorded contractions",avgIntervalLabel:"Average start-to-start interval",avgDurationLabel:"Average duration",rangeLabel:"Interval range",latestRestLabel:"Latest completed rest time",
+noNote:"No note",settingsSaved:"Settings saved",migrated:"Existing V1 data was preserved and migrated.",chartPoint:"Contraction",rollingAvgShort:"Rolling avg"
+},
+de:{
+tagline:"Wehentimer · lokal & offline",urgentHelp:"Dringende Symptome / Hilfe",track:"Tracken",history:"Verlauf",summary:"Zusammenfassung",settings:"Einstellungen",
+designStudio:"Design Studio",designStudioHelp:"Wähle einen visuellen Stil. Änderungen werden sofort angewendet und bleiben lokal auf diesem Gerät.",designMeta:"Jedes Preset verändert Farbwelt, Eckenformen, Typografie sowie Chart- und Button-Stil. Dunkel/Hell/Auto funktionieren weiterhin unabhängig.",
+latestPain:"Letzte Schmerzintensität",painQuestion:"Wie intensiv war diese Wehe?",painOptional:"Optional · kann später ergänzt oder geändert werden.",painZero:"0 · Kein Schmerz",painTen:"10 · Schlimmster vorstellbarer Schmerz",later:"Später",painIntensity:"Schmerzintensität",painSubjective:"Subjektive Bewertung 0–10",notRated:"Nicht bewertet",showPainChart:"Schmerzwerte unter dem Chart anzeigen",ratedContractions:"Bewertete Wehen",painRange:"Schmerzbereich",painNote:"Schmerzwerte sind subjektive Eingaben und werden nur so angezeigt, wie sie erfasst wurden.",
+readyToRecord:"Bereit zur Erfassung",idle:"Bereit",timing:"Wehe läuft",tapWhenEnds:"Tippen, wenn die Wehe endet.",latestDuration:"Letzte Dauer",latestInterval:"Letzter Abstand",restTime:"Ruhezeit",latestStart:"Letzter Start",
+needThree:"Mindestens 3 Wehen erfassen, um ein klareres Muster zu sehen.",patternSnapshot:"Musterübersicht",factualTimingOnly:"Nur Zeitdaten · keine Beurteilung der Geburtsphase",
+contractionsWindow:"Wehen im Zeitraum",avgDuration:"Ø Dauer",avgInterval:"Ø Abstand",intervalRange:"Abstandsbereich",pattern:"Muster",
+regularitySupport:"Basierend auf Schwankungen der erfassten Abstände; dies bewertet nicht den Geburtsfortschritt.",contractionPattern:"Wehenmuster",sharedAxis:"Dauer + Start-zu-Start-Abstand auf gemeinsamer Zeitachse",
+intervalLegend:"Abstand · Minuten zwischen Starts",durationLegend:"Dauer · Sekunden",rollingAverage:"Gleitender Ø Abstand",lowerMeansCloser:"Niedrigere Abstandswerte bedeuten weniger Zeit zwischen den Wehenstarts.",
+historyRegister:"Verlaufsregister",historyHelp:"Einträge prüfen, korrigieren, ergänzen oder löschen.",newSession:"Neue Session",factualSummary:"Faktische Zusammenfassung",summaryHelp:"Zum Weitergeben der erfassten Zeitdaten an das Geburtsteam.",
+copySummary:"Zusammenfassung kopieren",share:"Teilen",exportCsv:"CSV exportieren",exportJson:"JSON exportieren",displayAccess:"Anzeige & Barrierefreiheit",language:"Sprache",theme:"Darstellung",auto:"Automatisch",dark:"Dunkel",light:"Hell",
+textSize:"Textgröße",normal:"Normal",large:"Groß",extraLarge:"Sehr groß",haptics:"Haptisches Feedback",rollingAvgSetting:"Gleitenden Abstandsmittelwert anzeigen",reduceMotion:"Bewegungen reduzieren",
+contactDetails:"Kontaktdaten",maternityPhone:"Telefon Geburtsteam",emergencyPhone:"Lokale Notrufnummer",saveSettings:"Einstellungen speichern",dataControl:"Deine Daten",
+localOnly:"Wehendaten werden ausschließlich lokal auf diesem Gerät gespeichert. Kein Konto und keine Cloud-Synchronisierung.",exportAll:"Alle Daten exportieren (JSON)",deleteSession:"Ausgewählte Session löschen",deleteAll:"Alle lokalen Daten löschen",
+disclaimer:"ConTrack erfasst Zeiten und Notizen. Die App diagnostiziert keine Geburt, bestimmt keine Muttermundöffnung, sagt keine Geburtsphase voraus und ersetzt keine professionelle medizinische Beratung.",
+startContraction:"Wehe starten",endContraction:"Wehe beenden",helpCopy:"Wenn du wegen Symptomen besorgt bist oder eine Untersuchung für nötig hältst, kontaktiere dein Geburtsteam. Bei unmittelbarer Gefahr oder wenn die Geburt unmittelbar bevorzustehen scheint und eine sichere Fahrt nicht möglich ist, den lokalen Rettungsdienst rufen.",
+notExhaustive:"Dieses Tool prüft nicht auf dringende Symptome und ersetzt keine klinische Beratung.",callMaternity:"Geburtsteam anrufen",callEmergency:"Notruf wählen",close:"Schließen",
+editEntry:"Wehe bearbeiten",startTime:"Startzeit",endTime:"Endzeit",noteOptional:"Notiz (optional)",cancel:"Abbrechen",save:"Speichern",undo:"Rückgängig",edit:"Bearbeiten",saved:"Wehe gespeichert",
+notEnough:"Nicht genug Daten",mostlyRegular:"Überwiegend regelmäßig",variable:"Variabel",becomingRegular:"Wird regelmäßiger",shortened:"Die Abstände wurden im gewählten Zeitraum kürzer.",variableTrend:"Die Abstände bleiben im gewählten Zeitraum variabel.",stableTrend:"Die Abstände sind im gewählten Zeitraum weitgehend ähnlich.",notEnoughTrend:"Nicht genug Daten für eine Trendbeschreibung.",
+contractions:"Wehen",inLast:"in den letzten",minutes:"Min.",all:"Alle",session:"Session",current:"Aktuell",duration:"Dauer",interval:"Abstand",rest:"Ruhe",start:"Start",end:"Ende",note:"Notiz",delete:"Löschen",
+confirmDeleteEntry:"Diese Wehe löschen?",confirmNewSession:"Neue Session starten? Der bisherige Verlauf bleibt verfügbar.",confirmDeleteSession:"Ausgewählte Session mit allen Wehen löschen?",confirmDeleteAll:"ALLE lokalen ConTrack-Daten löschen? Dies kann nicht rückgängig gemacht werden.",
+invalidTimes:"Die Endzeit muss nach der Startzeit liegen.",phoneMissing:"Bitte zuerst die Telefonnummer in Einstellungen hinterlegen.",copied:"Zusammenfassung kopiert.",shareFailed:"Teilen ist hier nicht verfügbar. Die Zusammenfassung wurde stattdessen kopiert.",
+summaryTitle:"Zusammenfassung Wehenzeiten",sessionStarted:"Session gestartet",latestRecorded:"Letzte erfasste Wehe",recordedCount:"Erfasste Wehen",avgIntervalLabel:"Ø Start-zu-Start-Abstand",avgDurationLabel:"Ø Dauer",rangeLabel:"Abstandsbereich",latestRestLabel:"Letzte abgeschlossene Ruhezeit",
+noNote:"Keine Notiz",settingsSaved:"Einstellungen gespeichert",migrated:"Vorhandene V1-Daten wurden übernommen.",chartPoint:"Wehe",rollingAvgShort:"Gleitender Ø"
 },
 zh:{
- appName:"宫缩记录器",pattern:"记录到的宫缩模式",lastDuration:"最近持续时间",lastInterval:"最近间隔",avg5:"最近5次平均",
- ready:"就绪",start:"开始宫缩",stop:"结束宫缩",water:"破水",bleeding:"出血",movement:"胎动减少",pushUrge:"强烈便意/用力感",
- undo:"↶ 删除最近一次",editLast:"编辑最近一次",newSession:"新记录",intervalChart:"宫缩间隔",intervalStart:"开始 → 开始 · 分钟",
- interval:"间隔",configuredThreshold:"设定阈值",durationChart:"宫缩持续时间",seconds:"秒",duration:"持续时间",customPlan:"个人方案",
- recent:"最近宫缩",export:"导出 CSV",important:"重要：",disclaimer:"本应用只记录时间并显示趋势，不能判断宫口扩张或分娩阶段，也不能替代助产士、医生或产科。若不确定，请联系产科。",
- safetyBasis:"V1 安全规则",safetyText:"如破水、阴道出血、胎动明显减少、孕周不足37周且疑似临产、单次宫缩超过2分钟，或10分钟内≥6次宫缩，应立即联系产科。若有强烈用力感且感觉宝宝即将出生，请拨打当地急救电话。",
- settings:"设置",gestWeek:"孕周",intervalThreshold:"联系产科间隔（分钟）",durationThreshold:"方案持续时间（秒）",persistenceThreshold:"方案持续周期（分钟）",
- maternityPhone:"产科电话",emergencyPhone:"当地急救电话",ruleNote:"5/1/1 仅作为可配置的个人方案。当规律宫缩达到设定的联系间隔时，本应用不会因为“尚未满1小时”而延迟联系建议。",
- cancel:"取消",save:"保存",eraseAll:"删除全部本地数据",editContraction:"编辑宫缩",startTime:"开始",endTime:"结束",callMaternity:"呼叫产科",callEmergency:"拨打急救电话",
- noData:"暂无数据",noDataCopy:"宫缩开始时点击开始。",oneRecorded:"已记录第一次宫缩",oneCopy:"至少需要两次宫缩才能计算间隔。",
- observe:"继续观察",observeCopy:"尚未发现规律且频繁的模式。继续记录；如有任何疑问，请联系产科。",
- increasing:"逐渐规律",increasingCopy:"宫缩正在变得更规律或间隔缩短。请做好准备并遵循个人分娩计划。",
- contact:"联系产科",contactCopy:"规律宫缩大致达到设定的联系间隔。现在联系产科/助产士。",
- urgent:"立即联系产科",urgentCopy:"出现安全警示条件。不要等待更多记录，请立即联系产科/助产士。",
- emergency:"紧急情况",emergencyCopy:"已记录强烈用力感/可能即将分娩。请联系当地急救服务。",
- preterm:"不足37周 + 临产迹象",longContraction:"宫缩超过2分钟",sixInTen:"10分钟内≥6次宫缩",waterReason:"破水",bleedingReason:"阴道出血",movementReason:"胎动明显减少",
- running:"宫缩进行中",regularity:"规律性",high:"高",medium:"中",low:"低",count:"宫缩次数",confirmNew:"开始新的记录吗？当前记录仍保存在本机，但将不再显示。",confirmErase:"确定删除所有本地宫缩与设置数据吗？",invalidEdit:"结束时间必须晚于开始时间。",noPhone:"请先在设置中填写电话号码。",eventSaved:"事件已记录",offline:"离线"
+tagline:"宫缩计时 · 本地离线",urgentHelp:"紧急症状 / 帮助",track:"记录",history:"历史",summary:"摘要",settings:"设置",
+designStudio:"设计工作室",designStudioHelp:"选择一种视觉风格。更改会立即应用，并仅保存在本设备。",designMeta:"每个预设都会改变配色、圆角、字体以及图表和按钮样式。深色/浅色/自动模式仍可独立使用。",
+latestPain:"最近疼痛强度",painQuestion:"这次宫缩有多强烈？",painOptional:"可选 · 之后可补充或修改。",painZero:"0 · 无痛",painTen:"10 · 可想象的最严重疼痛",later:"稍后",painIntensity:"疼痛强度",painSubjective:"主观 0–10 评分",notRated:"未评分",showPainChart:"在图表下显示疼痛评分",ratedContractions:"已评分宫缩",painRange:"疼痛范围",painNote:"疼痛评分为用户主观输入，仅按实际记录显示。",
+readyToRecord:"准备记录",idle:"待机",timing:"正在计时",tapWhenEnds:"宫缩结束时点击。",latestDuration:"最近持续时间",latestInterval:"最近间隔",restTime:"休息时间",latestStart:"最近开始",
+needThree:"至少记录 3 次宫缩，才能更清楚地查看模式。",patternSnapshot:"模式概览",factualTimingOnly:"仅显示时间事实 · 不判断产程阶段",
+contractionsWindow:"时间窗内宫缩次数",avgDuration:"平均持续时间",avgInterval:"平均间隔",intervalRange:"间隔范围",pattern:"模式",
+regularitySupport:"基于已记录间隔的变化；不评估产程进展。",contractionPattern:"宫缩模式",sharedAxis:"持续时间 + 开始到开始间隔，共用时间轴",
+intervalLegend:"间隔 · 两次开始之间的分钟数",durationLegend:"持续时间 · 秒",rollingAverage:"间隔滚动平均",lowerMeansCloser:"间隔数值越低，表示两次宫缩开始之间的时间越短。",
+historyRegister:"历史记录",historyHelp:"查看、更正、添加备注或删除任何记录。",newSession:"新建记录",factualSummary:"事实摘要",summaryHelp:"用于向产科团队简洁提供已记录的时间信息。",
+copySummary:"复制摘要",share:"分享",exportCsv:"导出 CSV",exportJson:"导出 JSON",displayAccess:"显示与无障碍",language:"语言",theme:"主题",auto:"自动",dark:"深色",light:"浅色",
+textSize:"文字大小",normal:"正常",large:"大",extraLarge:"特大",haptics:"触觉反馈",rollingAvgSetting:"显示间隔滚动平均",reduceMotion:"减少动画",
+contactDetails:"联系信息",maternityPhone:"产科团队电话",emergencyPhone:"当地急救电话",saveSettings:"保存设置",dataControl:"你的数据",
+localOnly:"宫缩数据仅保存在本设备上，不需要账户，也不进行云同步。",exportAll:"导出全部数据（JSON）",deleteSession:"删除所选记录",deleteAll:"删除全部本地数据",
+disclaimer:"ConTrack 只记录时间和备注。它不能诊断是否临产、判断宫口扩张、预测产程阶段，也不能替代专业医疗建议。",
+startContraction:"开始宫缩",endContraction:"结束宫缩",helpCopy:"如果你担心症状或觉得需要评估，请联系产科团队。如果你认为存在立即危险，或分娩似乎迫在眉睫且无法安全前往医院，请拨打当地急救电话。",
+notExhaustive:"本工具不会筛查紧急症状，也不能替代临床建议。",callMaternity:"联系产科团队",callEmergency:"拨打急救电话",close:"关闭",
+editEntry:"编辑宫缩",startTime:"开始时间",endTime:"结束时间",noteOptional:"备注（可选）",cancel:"取消",save:"保存",undo:"撤销",edit:"编辑",saved:"宫缩已保存",
+notEnough:"数据不足",mostlyRegular:"大多规律",variable:"变化较大",becomingRegular:"逐渐更规律",shortened:"所选时间段内宫缩间隔缩短。",variableTrend:"所选时间段内间隔仍有较大变化。",stableTrend:"所选时间段内间隔大致相近。",notEnoughTrend:"数据不足，无法描述趋势。",
+contractions:"次宫缩",inLast:"最近",minutes:"分钟",all:"全部",session:"记录",current:"当前",duration:"持续",interval:"间隔",rest:"休息",start:"开始",end:"结束",note:"备注",delete:"删除",
+confirmDeleteEntry:"删除这次宫缩吗？",confirmNewSession:"开始新的记录吗？当前记录仍会保留。",confirmDeleteSession:"删除所选记录及其中所有宫缩吗？",confirmDeleteAll:"删除所有本地 ConTrack 数据？此操作无法撤销。",
+invalidTimes:"结束时间必须晚于开始时间。",phoneMissing:"请先在设置中添加电话号码。",copied:"摘要已复制。",shareFailed:"此处无法分享，已改为复制摘要。",
+summaryTitle:"宫缩时间摘要",sessionStarted:"记录开始",latestRecorded:"最近一次宫缩",recordedCount:"已记录宫缩",avgIntervalLabel:"平均开始到开始间隔",avgDurationLabel:"平均持续时间",rangeLabel:"间隔范围",latestRestLabel:"最近一次完整休息时间",
+noNote:"无备注",settingsSaved:"设置已保存",migrated:"已有 V1 数据已保留并迁移。",chartPoint:"宫缩",rollingAvgShort:"滚动平均"
 },
 hi:{
- appName:"कॉन्ट्रैक्शन ट्रैकर",pattern:"रिकॉर्ड किया गया पैटर्न",lastDuration:"पिछली अवधि",lastInterval:"पिछला अंतराल",avg5:"पिछले 5 का औसत",
- ready:"तैयार",start:"कॉन्ट्रैक्शन शुरू",stop:"कॉन्ट्रैक्शन समाप्त",water:"पानी टूटना",bleeding:"रक्तस्राव",movement:"हलचल ↓",pushUrge:"ज़ोर लगाने की इच्छा",
- undo:"↶ पिछला हटाएँ",editLast:"पिछला संपादित करें",newSession:"नया सत्र",intervalChart:"कॉन्ट्रैक्शन अंतराल",intervalStart:"शुरू → शुरू · मिनट",
- interval:"अंतराल",configuredThreshold:"सेट सीमा",durationChart:"कॉन्ट्रैक्शन अवधि",seconds:"सेकंड",duration:"अवधि",customPlan:"व्यक्तिगत योजना",
- recent:"हाल के कॉन्ट्रैक्शन",export:"CSV निर्यात",important:"महत्वपूर्ण:",disclaimer:"यह ऐप केवल समय रिकॉर्ड करता है और पैटर्न दिखाता है। यह सर्विक्स के खुलने या प्रसव के चरण का निदान नहीं कर सकता और दाई, डॉक्टर या प्रसूति इकाई का विकल्प नहीं है। संदेह होने पर प्रसूति इकाई से संपर्क करें।",
- safetyBasis:"V1 सुरक्षा आधार",safetyText:"पानी टूटने, योनि से रक्तस्राव, बच्चे की हलचल स्पष्ट रूप से कम होने, 37 सप्ताह से पहले प्रसव के संकेत, 2 मिनट से अधिक चलने वाले कॉन्ट्रैक्शन, या 10 मिनट में ≥6 कॉन्ट्रैक्शन होने पर तुरंत संपर्क करें। बहुत तेज़ ज़ोर लगाने की इच्छा और जन्म निकट लगे तो स्थानीय आपात सेवा को कॉल करें।",
- settings:"सेटिंग्स",gestWeek:"गर्भावस्था सप्ताह",intervalThreshold:"संपर्क अंतराल (मिनट)",durationThreshold:"योजना अवधि (सेकंड)",persistenceThreshold:"योजना समय (मिनट)",
- maternityPhone:"प्रसूति इकाई फोन",emergencyPhone:"स्थानीय आपात नंबर",ruleNote:"5/1/1 मान केवल कॉन्फ़िगर करने योग्य व्यक्तिगत योजना हैं। नियमित कॉन्ट्रैक्शन सेट संपर्क अंतराल तक पहुँचने पर ऐप संपर्क की सलाह को 1 घंटे तक प्रतीक्षा नहीं कराता।",
- cancel:"रद्द करें",save:"सहेजें",eraseAll:"सारा स्थानीय डेटा मिटाएँ",editContraction:"कॉन्ट्रैक्शन संपादित करें",startTime:"शुरू",endTime:"समाप्त",callMaternity:"प्रसूति इकाई को कॉल",callEmergency:"आपात कॉल",
- noData:"अभी डेटा नहीं",noDataCopy:"कॉन्ट्रैक्शन शुरू होते ही पहला रिकॉर्ड शुरू करें।",oneRecorded:"पहला कॉन्ट्रैक्शन रिकॉर्ड हुआ",oneCopy:"अंतराल के लिए कम से कम दो कॉन्ट्रैक्शन चाहिए।",
- observe:"निगरानी रखें",observeCopy:"अभी नियमित और बार-बार आने वाला पैटर्न नहीं दिखा। रिकॉर्ड करते रहें और संदेह होने पर प्रसूति इकाई से संपर्क करें।",
- increasing:"अधिक नियमित हो रहा है",increasingCopy:"पैटर्न अधिक नियमित हो रहा है या अंतराल कम हो रहे हैं। तैयारी करें और अपनी व्यक्तिगत जन्म योजना का पालन करें।",
- contact:"प्रसूति इकाई से संपर्क करें",contactCopy:"नियमित कॉन्ट्रैक्शन लगभग सेट संपर्क अंतराल पर हैं। अभी प्रसूति इकाई/दाई से संपर्क करें।",
- urgent:"तुरंत संपर्क करें",urgentCopy:"सुरक्षा चेतावनी सक्रिय है। और डेटा की प्रतीक्षा न करें; अभी प्रसूति इकाई/दाई से संपर्क करें।",
- emergency:"आपात स्थिति",emergencyCopy:"तेज़ ज़ोर लगाने की इच्छा / जन्म निकट होने का संकेत दर्ज हुआ। स्थानीय आपात सेवा से संपर्क करें।",
- preterm:"37 सप्ताह से कम + प्रसव संकेत",longContraction:"कॉन्ट्रैक्शन 2 मिनट से अधिक",sixInTen:"10 मिनट में ≥6 कॉन्ट्रैक्शन",waterReason:"पानी टूटना",bleedingReason:"योनि से रक्तस्राव",movementReason:"बच्चे की हलचल स्पष्ट रूप से कम",
- running:"कॉन्ट्रैक्शन चल रहा है",regularity:"नियमितता",high:"उच्च",medium:"मध्यम",low:"कम",count:"कॉन्ट्रैक्शन",confirmNew:"नया सत्र शुरू करें? मौजूदा सत्र स्थानीय रूप से रहेगा लेकिन अब दिखाई नहीं देगा।",confirmErase:"सभी स्थानीय कॉन्ट्रैक्शन और सेटिंग डेटा मिटाएँ?",invalidEdit:"समाप्त समय शुरू समय के बाद होना चाहिए।",noPhone:"कृपया सेटिंग्स में फोन नंबर जोड़ें।",eventSaved:"घटना सहेजी गई",offline:"ऑफ़लाइन"
+tagline:"कॉन्ट्रैक्शन टाइमर · स्थानीय और ऑफ़लाइन",urgentHelp:"तुरंत लक्षण / सहायता",track:"ट्रैक",history:"इतिहास",summary:"सारांश",settings:"सेटिंग्स",
+designStudio:"डिज़ाइन स्टूडियो",designStudioHelp:"एक दृश्य शैली चुनें। बदलाव तुरंत लागू होते हैं और इसी डिवाइस पर रहते हैं।",designMeta:"हर प्रीसेट रंग, कोनों की आकृति, टाइपोग्राफी और चार्ट/बटन शैली बदलता है। डार्क/लाइट/ऑटो अलग से काम करते रहते हैं।",
+latestPain:"पिछली दर्द तीव्रता",painQuestion:"यह कॉन्ट्रैक्शन कितना तीव्र था?",painOptional:"वैकल्पिक · इसे बाद में जोड़ा या बदला जा सकता है।",painZero:"0 · कोई दर्द नहीं",painTen:"10 · कल्पनीय सबसे अधिक दर्द",later:"बाद में",painIntensity:"दर्द की तीव्रता",painSubjective:"व्यक्तिगत 0–10 रेटिंग",notRated:"रेट नहीं किया",showPainChart:"चार्ट के नीचे दर्द रेटिंग दिखाएँ",ratedContractions:"रेट किए गए कॉन्ट्रैक्शन",painRange:"दर्द सीमा",painNote:"दर्द रेटिंग उपयोगकर्ता द्वारा दर्ज व्यक्तिपरक मान हैं और केवल दर्ज रूप में दिखाई जाती हैं।",
+readyToRecord:"रिकॉर्ड करने के लिए तैयार",idle:"तैयार",timing:"टाइमिंग जारी",tapWhenEnds:"कॉन्ट्रैक्शन समाप्त होने पर टैप करें।",latestDuration:"पिछली अवधि",latestInterval:"पिछला अंतराल",restTime:"आराम का समय",latestStart:"पिछला शुरू",
+needThree:"स्पष्ट पैटर्न देखने के लिए कम से कम 3 कॉन्ट्रैक्शन रिकॉर्ड करें।",patternSnapshot:"पैटर्न स्नैपशॉट",factualTimingOnly:"केवल समय-आधारित तथ्य · प्रसव चरण का आकलन नहीं",
+contractionsWindow:"विंडो में कॉन्ट्रैक्शन",avgDuration:"औसत अवधि",avgInterval:"औसत अंतराल",intervalRange:"अंतराल सीमा",pattern:"पैटर्न",
+regularitySupport:"रिकॉर्ड किए गए अंतरालों में बदलाव पर आधारित; यह प्रसव की प्रगति का आकलन नहीं है।",contractionPattern:"कॉन्ट्रैक्शन पैटर्न",sharedAxis:"अवधि + शुरू-से-शुरू अंतराल एक समय-अक्ष पर",
+intervalLegend:"अंतराल · शुरू होने के बीच मिनट",durationLegend:"अवधि · सेकंड",rollingAverage:"रोलिंग अंतराल औसत",lowerMeansCloser:"कम अंतराल मान का अर्थ कॉन्ट्रैक्शन शुरू होने के बीच कम समय है।",
+historyRegister:"इतिहास रजिस्टर",historyHelp:"किसी भी रिकॉर्ड को देखें, सुधारें, नोट जोड़ें या हटाएँ।",newSession:"नया सत्र",factualSummary:"तथ्यात्मक सारांश",summaryHelp:"मातृत्व टीम को रिकॉर्ड किए गए समय की संक्षिप्त जानकारी देने के लिए।",
+copySummary:"सारांश कॉपी करें",share:"शेयर",exportCsv:"CSV निर्यात",exportJson:"JSON निर्यात",displayAccess:"डिस्प्ले और एक्सेसिबिलिटी",language:"भाषा",theme:"थीम",auto:"ऑटो",dark:"डार्क",light:"लाइट",
+textSize:"टेक्स्ट आकार",normal:"सामान्य",large:"बड़ा",extraLarge:"बहुत बड़ा",haptics:"हैप्टिक फीडबैक",rollingAvgSetting:"रोलिंग अंतराल औसत दिखाएँ",reduceMotion:"गतिशीलता कम करें",
+contactDetails:"संपर्क विवरण",maternityPhone:"मातृत्व टीम फोन",emergencyPhone:"स्थानीय आपात नंबर",saveSettings:"सेटिंग्स सहेजें",dataControl:"आपका डेटा",
+localOnly:"कॉन्ट्रैक्शन डेटा केवल इस डिवाइस पर स्थानीय रूप से संग्रहीत होता है। कोई खाता या क्लाउड सिंक नहीं।",exportAll:"सारा डेटा निर्यात (JSON)",deleteSession:"चुना सत्र हटाएँ",deleteAll:"सारा स्थानीय डेटा हटाएँ",
+disclaimer:"ConTrack समय और नोट रिकॉर्ड करता है। यह प्रसव का निदान, सर्विक्स खुलने का आकलन, प्रसव चरण की भविष्यवाणी या पेशेवर चिकित्सा सलाह का विकल्प नहीं है।",
+startContraction:"कॉन्ट्रैक्शन शुरू",endContraction:"कॉन्ट्रैक्शन समाप्त",helpCopy:"यदि आप लक्षणों को लेकर चिंतित हैं या जांच की जरूरत महसूस करते हैं, तो अपनी मातृत्व टीम से संपर्क करें। यदि तत्काल खतरा लगे, या जन्म बहुत निकट लगे और सुरक्षित रूप से यात्रा करना संभव न हो, तो स्थानीय आपात सेवा को कॉल करें।",
+notExhaustive:"यह टूल तत्काल लक्षणों की स्क्रीनिंग नहीं करता और क्लिनिकल सलाह का विकल्प नहीं है।",callMaternity:"मातृत्व टीम को कॉल",callEmergency:"आपात कॉल",close:"बंद करें",
+editEntry:"कॉन्ट्रैक्शन संपादित करें",startTime:"शुरू समय",endTime:"समाप्त समय",noteOptional:"नोट (वैकल्पिक)",cancel:"रद्द करें",save:"सहेजें",undo:"वापस लें",edit:"संपादित करें",saved:"कॉन्ट्रैक्शन सहेजा गया",
+notEnough:"पर्याप्त डेटा नहीं",mostlyRegular:"अधिकतर नियमित",variable:"परिवर्तनशील",becomingRegular:"अधिक नियमित हो रहा है",shortened:"चुनी अवधि में अंतराल कम हुए हैं।",variableTrend:"चुनी अवधि में अंतराल परिवर्तनशील हैं।",stableTrend:"चुनी अवधि में अंतराल लगभग समान हैं।",notEnoughTrend:"रुझान बताने के लिए पर्याप्त डेटा नहीं।",
+contractions:"कॉन्ट्रैक्शन",inLast:"पिछले",minutes:"मिनट",all:"सभी",session:"सत्र",current:"वर्तमान",duration:"अवधि",interval:"अंतराल",rest:"आराम",start:"शुरू",end:"समाप्त",note:"नोट",delete:"हटाएँ",
+confirmDeleteEntry:"यह कॉन्ट्रैक्शन हटाएँ?",confirmNewSession:"नया सत्र शुरू करें? वर्तमान इतिहास उपलब्ध रहेगा।",confirmDeleteSession:"चुना सत्र और उसके सभी कॉन्ट्रैक्शन हटाएँ?",confirmDeleteAll:"सारा स्थानीय ConTrack डेटा हटाएँ? इसे वापस नहीं किया जा सकता।",
+invalidTimes:"समाप्त समय शुरू समय के बाद होना चाहिए।",phoneMissing:"पहले सेटिंग्स में फोन नंबर जोड़ें।",copied:"सारांश कॉपी किया गया।",shareFailed:"यहाँ शेयर उपलब्ध नहीं है। सारांश कॉपी कर दिया गया है।",
+summaryTitle:"कॉन्ट्रैक्शन समय सारांश",sessionStarted:"सत्र शुरू",latestRecorded:"पिछला रिकॉर्ड किया कॉन्ट्रैक्शन",recordedCount:"रिकॉर्ड किए कॉन्ट्रैक्शन",avgIntervalLabel:"औसत शुरू-से-शुरू अंतराल",avgDurationLabel:"औसत अवधि",rangeLabel:"अंतराल सीमा",latestRestLabel:"पिछला पूरा आराम समय",
+noNote:"कोई नोट नहीं",settingsSaved:"सेटिंग्स सहेजी गईं",migrated:"मौजूदा V1 डेटा सुरक्षित रखकर माइग्रेट किया गया।",chartPoint:"कॉन्ट्रैक्शन",rollingAvgShort:"रोलिंग औसत"
+},
+fr:{
+tagline:"Minuteur de contractions · local et hors ligne",urgentHelp:"Symptômes urgents / aide",track:"Suivi",history:"Historique",summary:"Résumé",settings:"Réglages",
+designStudio:"Studio de design",designStudioHelp:"Choisissez un style visuel. Les changements s’appliquent immédiatement et restent locaux sur cet appareil.",designMeta:"Chaque style modifie la palette, les angles, la typographie et le style des graphiques/boutons. Sombre/Clair/Auto restent indépendants.",
+latestPain:"Dernière intensité de douleur",painQuestion:"Quelle était l’intensité de cette contraction ?",painOptional:"Facultatif · vous pourrez l’ajouter ou le modifier plus tard.",painZero:"0 · Aucune douleur",painTen:"10 · Pire douleur imaginable",later:"Plus tard",painIntensity:"Intensité de la douleur",painSubjective:"Évaluation subjective 0–10",notRated:"Non évaluée",showPainChart:"Afficher la douleur sous le graphique",ratedContractions:"Contractions évaluées",painRange:"Plage de douleur",painNote:"Les évaluations de douleur sont des valeurs subjectives saisies par l’utilisateur et sont affichées telles qu’enregistrées.",
+readyToRecord:"Prêt à enregistrer",idle:"Prêt",timing:"Chronométrage en cours",tapWhenEnds:"Touchez lorsque la contraction se termine.",latestDuration:"Dernière durée",latestInterval:"Dernier intervalle",restTime:"Temps de repos",latestStart:"Dernier début",
+needThree:"Enregistrez au moins 3 contractions pour voir un schéma plus clair.",patternSnapshot:"Aperçu du schéma",factualTimingOnly:"Données temporelles uniquement · aucune évaluation du stade du travail",
+contractionsWindow:"Contractions dans la période",avgDuration:"Durée moyenne",avgInterval:"Intervalle moyen",intervalRange:"Plage des intervalles",pattern:"Schéma",
+regularitySupport:"Basé sur la variation des intervalles enregistrés ; cela n’évalue pas la progression du travail.",contractionPattern:"Schéma des contractions",sharedAxis:"Durée + intervalle début-à-début sur un même axe temporel",
+intervalLegend:"Intervalle · minutes entre les débuts",durationLegend:"Durée · secondes",rollingAverage:"Moyenne mobile des intervalles",lowerMeansCloser:"Des intervalles plus faibles signifient moins de temps entre les débuts des contractions.",
+historyRegister:"Registre d’historique",historyHelp:"Vérifier, corriger, annoter ou supprimer chaque entrée.",newSession:"Nouvelle session",factualSummary:"Résumé factuel",summaryHelp:"Pour communiquer les temps enregistrés à l’équipe de maternité.",
+copySummary:"Copier le résumé",share:"Partager",exportCsv:"Exporter CSV",exportJson:"Exporter JSON",displayAccess:"Affichage et accessibilité",language:"Langue",theme:"Thème",auto:"Auto",dark:"Sombre",light:"Clair",
+textSize:"Taille du texte",normal:"Normale",large:"Grande",extraLarge:"Très grande",haptics:"Retour haptique",rollingAvgSetting:"Afficher la moyenne mobile des intervalles",reduceMotion:"Réduire les animations",
+contactDetails:"Coordonnées",maternityPhone:"Téléphone de la maternité",emergencyPhone:"Numéro d’urgence local",saveSettings:"Enregistrer les réglages",dataControl:"Vos données",
+localOnly:"Les données restent stockées localement sur cet appareil. Aucun compte ni synchronisation cloud.",exportAll:"Exporter toutes les données (JSON)",deleteSession:"Supprimer la session sélectionnée",deleteAll:"Supprimer toutes les données locales",
+disclaimer:"ConTrack enregistre des temps et des notes. Il ne diagnostique pas le travail, n’évalue pas la dilatation du col, ne prédit pas le stade du travail et ne remplace pas un avis médical professionnel.",
+startContraction:"Démarrer la contraction",endContraction:"Terminer la contraction",helpCopy:"Si des symptômes vous inquiètent ou si vous pensez avoir besoin d’une évaluation, contactez votre équipe de maternité. En cas de danger immédiat, ou si la naissance semble imminente et que le déplacement n’est pas sûr, appelez les secours locaux.",
+notExhaustive:"Cet outil ne dépiste pas les symptômes urgents et ne remplace pas un avis clinique.",callMaternity:"Appeler la maternité",callEmergency:"Appeler les secours",close:"Fermer",
+editEntry:"Modifier la contraction",startTime:"Heure de début",endTime:"Heure de fin",noteOptional:"Note (facultative)",cancel:"Annuler",save:"Enregistrer",undo:"Annuler",edit:"Modifier",saved:"Contraction enregistrée",
+notEnough:"Pas assez de données",mostlyRegular:"Plutôt régulier",variable:"Variable",becomingRegular:"Devient plus régulier",shortened:"Les intervalles se sont raccourcis sur la période sélectionnée.",variableTrend:"Les intervalles restent variables sur la période sélectionnée.",stableTrend:"Les intervalles sont globalement similaires sur la période sélectionnée.",notEnoughTrend:"Pas assez de données pour décrire une tendance.",
+contractions:"contractions",inLast:"sur les dernières",minutes:"min",all:"Tout",session:"Session",current:"Actuelle",duration:"Durée",interval:"Intervalle",rest:"Repos",start:"Début",end:"Fin",note:"Note",delete:"Supprimer",
+confirmDeleteEntry:"Supprimer cette contraction ?",confirmNewSession:"Démarrer une nouvelle session ? L’historique actuel restera disponible.",confirmDeleteSession:"Supprimer la session sélectionnée et toutes ses contractions ?",confirmDeleteAll:"Supprimer TOUTES les données locales ConTrack ? Cette action est irréversible.",
+invalidTimes:"L’heure de fin doit être postérieure à l’heure de début.",phoneMissing:"Ajoutez d’abord le numéro de téléphone dans les réglages.",copied:"Résumé copié.",shareFailed:"Le partage n’est pas disponible ici. Le résumé a été copié.",
+summaryTitle:"Résumé des contractions",sessionStarted:"Session démarrée",latestRecorded:"Dernière contraction enregistrée",recordedCount:"Contractions enregistrées",avgIntervalLabel:"Intervalle moyen début-à-début",avgDurationLabel:"Durée moyenne",rangeLabel:"Plage des intervalles",latestRestLabel:"Dernier temps de repos terminé",
+noNote:"Aucune note",settingsSaved:"Réglages enregistrés",migrated:"Les données V1 existantes ont été conservées et migrées.",chartPoint:"Contraction",rollingAvgShort:"Moyenne mobile"
+},
+es:{
+tagline:"Temporizador de contracciones · local y sin conexión",urgentHelp:"Síntomas urgentes / ayuda",track:"Registrar",history:"Historial",summary:"Resumen",settings:"Ajustes",
+designStudio:"Estudio de diseño",designStudioHelp:"Elige un estilo visual. Los cambios se aplican al instante y permanecen en este dispositivo.",designMeta:"Cada estilo cambia la paleta, las formas, la tipografía y el aspecto de gráficos/botones. Oscuro/Claro/Auto siguen funcionando por separado.",
+latestPain:"Última intensidad de dolor",painQuestion:"¿Qué intensidad tuvo esta contracción?",painOptional:"Opcional · puedes añadirla o cambiarla más tarde.",painZero:"0 · Sin dolor",painTen:"10 · Peor dolor imaginable",later:"Más tarde",painIntensity:"Intensidad del dolor",painSubjective:"Valoración subjetiva 0–10",notRated:"Sin valorar",showPainChart:"Mostrar dolor debajo del gráfico",ratedContractions:"Contracciones valoradas",painRange:"Rango de dolor",painNote:"Las valoraciones de dolor son datos subjetivos introducidos por el usuario y se muestran tal como se registraron.",
+readyToRecord:"Listo para registrar",idle:"Listo",timing:"Cronometrando",tapWhenEnds:"Toca cuando termine la contracción.",latestDuration:"Última duración",latestInterval:"Último intervalo",restTime:"Tiempo de descanso",latestStart:"Último inicio",
+needThree:"Registra al menos 3 contracciones para ver un patrón más claro.",patternSnapshot:"Resumen del patrón",factualTimingOnly:"Solo datos de tiempo · sin evaluación de la fase del parto",
+contractionsWindow:"Contracciones en el periodo",avgDuration:"Duración media",avgInterval:"Intervalo medio",intervalRange:"Rango de intervalos",pattern:"Patrón",
+regularitySupport:"Basado en la variación de los intervalos registrados; no evalúa el progreso del parto.",contractionPattern:"Patrón de contracciones",sharedAxis:"Duración + intervalo inicio-a-inicio en un mismo eje temporal",
+intervalLegend:"Intervalo · minutos entre inicios",durationLegend:"Duración · segundos",rollingAverage:"Promedio móvil del intervalo",lowerMeansCloser:"Valores de intervalo más bajos significan menos tiempo entre los inicios.",
+historyRegister:"Registro histórico",historyHelp:"Revisar, corregir, anotar o eliminar cualquier entrada.",newSession:"Nueva sesión",factualSummary:"Resumen factual",summaryHelp:"Pensado para comunicar los tiempos registrados al equipo de maternidad.",
+copySummary:"Copiar resumen",share:"Compartir",exportCsv:"Exportar CSV",exportJson:"Exportar JSON",displayAccess:"Pantalla y accesibilidad",language:"Idioma",theme:"Tema",auto:"Auto",dark:"Oscuro",light:"Claro",
+textSize:"Tamaño del texto",normal:"Normal",large:"Grande",extraLarge:"Muy grande",haptics:"Respuesta háptica",rollingAvgSetting:"Mostrar promedio móvil del intervalo",reduceMotion:"Reducir movimiento",
+contactDetails:"Datos de contacto",maternityPhone:"Teléfono del equipo de maternidad",emergencyPhone:"Número local de emergencias",saveSettings:"Guardar ajustes",dataControl:"Tus datos",
+localOnly:"Los datos se guardan localmente en este dispositivo. Sin cuenta ni sincronización en la nube.",exportAll:"Exportar todos los datos (JSON)",deleteSession:"Eliminar sesión seleccionada",deleteAll:"Eliminar todos los datos locales",
+disclaimer:"ConTrack registra tiempos y notas. No diagnostica el parto, no determina la dilatación cervical, no predice la fase del parto y no sustituye el consejo médico profesional.",
+startContraction:"Iniciar contracción",endContraction:"Finalizar contracción",helpCopy:"Si te preocupan los síntomas o crees que necesitas valoración, contacta con tu equipo de maternidad. Si crees que hay peligro inmediato, o el nacimiento parece inminente y no puedes desplazarte con seguridad, llama a emergencias.",
+notExhaustive:"Esta herramienta no detecta síntomas urgentes y no sustituye el consejo clínico.",callMaternity:"Llamar a maternidad",callEmergency:"Llamar a emergencias",close:"Cerrar",
+editEntry:"Editar contracción",startTime:"Hora de inicio",endTime:"Hora de fin",noteOptional:"Nota (opcional)",cancel:"Cancelar",save:"Guardar",undo:"Deshacer",edit:"Editar",saved:"Contracción guardada",
+notEnough:"No hay suficientes datos",mostlyRegular:"Mayormente regular",variable:"Variable",becomingRegular:"Se vuelve más regular",shortened:"Los intervalos se han acortado en el periodo seleccionado.",variableTrend:"Los intervalos siguen siendo variables en el periodo seleccionado.",stableTrend:"Los intervalos son bastante similares en el periodo seleccionado.",notEnoughTrend:"No hay suficientes datos para describir una tendencia.",
+contractions:"contracciones",inLast:"en los últimos",minutes:"min",all:"Todo",session:"Sesión",current:"Actual",duration:"Duración",interval:"Intervalo",rest:"Descanso",start:"Inicio",end:"Fin",note:"Nota",delete:"Eliminar",
+confirmDeleteEntry:"¿Eliminar esta contracción?",confirmNewSession:"¿Iniciar una nueva sesión? El historial actual seguirá disponible.",confirmDeleteSession:"¿Eliminar la sesión seleccionada y todas sus contracciones?",confirmDeleteAll:"¿Eliminar TODOS los datos locales de ConTrack? No se puede deshacer.",
+invalidTimes:"La hora de fin debe ser posterior a la hora de inicio.",phoneMissing:"Añade primero el número de teléfono en Ajustes.",copied:"Resumen copiado.",shareFailed:"Compartir no está disponible aquí. Se ha copiado el resumen.",
+summaryTitle:"Resumen de tiempos de contracciones",sessionStarted:"Sesión iniciada",latestRecorded:"Última contracción registrada",recordedCount:"Contracciones registradas",avgIntervalLabel:"Intervalo medio inicio-a-inicio",avgDurationLabel:"Duración media",rangeLabel:"Rango de intervalos",latestRestLabel:"Último descanso completado",
+noNote:"Sin nota",settingsSaved:"Ajustes guardados",migrated:"Los datos V1 existentes se conservaron y migraron.",chartPoint:"Contracción",rollingAvgShort:"Promedio móvil"
+},
+fa:{
+tagline:"زمان‌سنج انقباض · محلی و آفلاین",urgentHelp:"علائم فوری / کمک",track:"ثبت",history:"تاریخچه",summary:"خلاصه",settings:"تنظیمات",
+designStudio:"استودیوی طراحی",designStudioHelp:"یک سبک بصری انتخاب کنید. تغییرات فوراً اعمال می‌شوند و روی همین دستگاه باقی می‌مانند.",designMeta:"هر سبک رنگ‌ها، فرم گوشه‌ها، تایپوگرافی و ظاهر نمودار/دکمه را تغییر می‌دهد. حالت روشن/تیره/خودکار مستقل می‌ماند.",
+latestPain:"آخرین شدت درد",painQuestion:"شدت این انقباض چقدر بود؟",painOptional:"اختیاری · بعداً می‌توانید اضافه یا تغییر دهید.",painZero:"۰ · بدون درد",painTen:"۱۰ · بدترین درد قابل تصور",later:"بعداً",painIntensity:"شدت درد",painSubjective:"امتیاز ذهنی ۰ تا ۱۰",notRated:"ثبت نشده",showPainChart:"نمایش درد زیر نمودار",ratedContractions:"انقباض‌های امتیازدهی‌شده",painRange:"دامنه درد",painNote:"امتیازهای درد مقادیر ذهنی واردشده توسط کاربر هستند و فقط همان‌طور که ثبت شده‌اند نمایش داده می‌شوند.",
+readyToRecord:"آماده ثبت",idle:"آماده",timing:"در حال زمان‌گیری",tapWhenEnds:"وقتی انقباض تمام شد لمس کنید.",latestDuration:"آخرین مدت",latestInterval:"آخرین فاصله",restTime:"زمان استراحت",latestStart:"آخرین شروع",
+needThree:"برای مشاهده الگوی واضح‌تر حداقل ۳ انقباض ثبت کنید.",patternSnapshot:"نمای کلی الگو",factualTimingOnly:"فقط داده زمانی · بدون ارزیابی مرحله زایمان",
+contractionsWindow:"انقباض‌ها در بازه",avgDuration:"میانگین مدت",avgInterval:"میانگین فاصله",intervalRange:"دامنه فاصله",pattern:"الگو",
+regularitySupport:"بر اساس تغییر فاصله‌های ثبت‌شده؛ پیشرفت زایمان را ارزیابی نمی‌کند.",contractionPattern:"الگوی انقباض",sharedAxis:"مدت + فاصله شروع تا شروع روی یک محور زمانی",
+intervalLegend:"فاصله · دقیقه بین شروع‌ها",durationLegend:"مدت · ثانیه",rollingAverage:"میانگین متحرک فاصله",lowerMeansCloser:"مقادیر کمتر فاصله یعنی زمان کمتری بین شروع انقباض‌ها.",
+historyRegister:"سوابق",historyHelp:"هر ثبت را مرور، اصلاح، یادداشت یا حذف کنید.",newSession:"جلسه جدید",factualSummary:"خلاصه واقعی",summaryHelp:"برای انتقال زمان‌های ثبت‌شده به تیم زایمان.",
+copySummary:"کپی خلاصه",share:"اشتراک‌گذاری",exportCsv:"خروجی CSV",exportJson:"خروجی JSON",displayAccess:"نمایش و دسترس‌پذیری",language:"زبان",theme:"پوسته",auto:"خودکار",dark:"تیره",light:"روشن",
+textSize:"اندازه متن",normal:"عادی",large:"بزرگ",extraLarge:"خیلی بزرگ",haptics:"بازخورد لمسی",rollingAvgSetting:"نمایش میانگین متحرک فاصله",reduceMotion:"کاهش حرکت",
+contactDetails:"اطلاعات تماس",maternityPhone:"تلفن تیم زایمان",emergencyPhone:"شماره اورژانس محلی",saveSettings:"ذخیره تنظیمات",dataControl:"داده‌های شما",
+localOnly:"داده‌ها فقط روی این دستگاه ذخیره می‌شوند. حساب یا همگام‌سازی ابری وجود ندارد.",exportAll:"خروجی همه داده‌ها (JSON)",deleteSession:"حذف جلسه انتخاب‌شده",deleteAll:"حذف همه داده‌های محلی",
+disclaimer:"ConTrack زمان‌ها و یادداشت‌ها را ثبت می‌کند. زایمان را تشخیص نمی‌دهد، بازشدگی دهانه رحم را تعیین نمی‌کند، مرحله زایمان را پیش‌بینی نمی‌کند و جایگزین مشاوره پزشکی نیست.",
+startContraction:"شروع انقباض",endContraction:"پایان انقباض",helpCopy:"اگر از علائم نگران هستید یا فکر می‌کنید نیاز به ارزیابی دارید، با تیم زایمان تماس بگیرید. اگر خطر فوری وجود دارد یا تولد قریب‌الوقوع است و رفت‌وآمد امن نیست، با اورژانس محلی تماس بگیرید.",
+notExhaustive:"این ابزار علائم فوری را غربال نمی‌کند و جایگزین توصیه بالینی نیست.",callMaternity:"تماس با تیم زایمان",callEmergency:"تماس با اورژانس",close:"بستن",
+editEntry:"ویرایش انقباض",startTime:"زمان شروع",endTime:"زمان پایان",noteOptional:"یادداشت (اختیاری)",cancel:"لغو",save:"ذخیره",undo:"بازگردانی",edit:"ویرایش",saved:"انقباض ذخیره شد",
+notEnough:"داده کافی نیست",mostlyRegular:"عمدتاً منظم",variable:"متغیر",becomingRegular:"در حال منظم‌تر شدن",shortened:"فاصله‌ها در بازه انتخاب‌شده کوتاه‌تر شده‌اند.",variableTrend:"فاصله‌ها در بازه انتخاب‌شده متغیر باقی مانده‌اند.",stableTrend:"فاصله‌ها در بازه انتخاب‌شده تقریباً مشابه‌اند.",notEnoughTrend:"داده کافی برای توصیف روند وجود ندارد.",
+contractions:"انقباض",inLast:"در آخرین",minutes:"دقیقه",all:"همه",session:"جلسه",current:"فعلی",duration:"مدت",interval:"فاصله",rest:"استراحت",start:"شروع",end:"پایان",note:"یادداشت",delete:"حذف",
+confirmDeleteEntry:"این انقباض حذف شود؟",confirmNewSession:"جلسه جدید شروع شود؟ تاریخچه فعلی در دسترس می‌ماند.",confirmDeleteSession:"جلسه انتخاب‌شده و همه انقباض‌های آن حذف شود؟",confirmDeleteAll:"همه داده‌های محلی ConTrack حذف شود؟ قابل بازگشت نیست.",
+invalidTimes:"زمان پایان باید بعد از شروع باشد.",phoneMissing:"ابتدا شماره تلفن را در تنظیمات وارد کنید.",copied:"خلاصه کپی شد.",shareFailed:"اشتراک‌گذاری در دسترس نیست. خلاصه کپی شد.",
+summaryTitle:"خلاصه زمان انقباض‌ها",sessionStarted:"شروع جلسه",latestRecorded:"آخرین انقباض ثبت‌شده",recordedCount:"انقباض‌های ثبت‌شده",avgIntervalLabel:"میانگین فاصله شروع تا شروع",avgDurationLabel:"میانگین مدت",rangeLabel:"دامنه فاصله",latestRestLabel:"آخرین استراحت کامل",
+noNote:"بدون یادداشت",settingsSaved:"تنظیمات ذخیره شد",migrated:"داده‌های V1 حفظ و منتقل شدند.",chartPoint:"انقباض",rollingAvgShort:"میانگین متحرک"
+},
+ar:{
+tagline:"مؤقت الانقباضات · محلي وبدون اتصال",urgentHelp:"أعراض عاجلة / مساعدة",track:"تتبع",history:"السجل",summary:"الملخص",settings:"الإعدادات",
+designStudio:"استوديو التصميم",designStudioHelp:"اختر نمطاً بصرياً. تُطبق التغييرات فوراً وتبقى محلياً على هذا الجهاز.",designMeta:"يغيّر كل نمط الألوان وأشكال الزوايا والخطوط وتصميم الرسوم والأزرار. تظل أوضاع داكن/فاتح/تلقائي مستقلة.",
+latestPain:"آخر شدة ألم",painQuestion:"ما شدة هذا الانقباض؟",painOptional:"اختياري · يمكن إضافته أو تغييره لاحقاً.",painZero:"0 · بدون ألم",painTen:"10 · أسوأ ألم يمكن تصوره",later:"لاحقاً",painIntensity:"شدة الألم",painSubjective:"تقييم ذاتي من 0 إلى 10",notRated:"غير مقيم",showPainChart:"إظهار تقييم الألم أسفل الرسم",ratedContractions:"الانقباضات المقيمة",painRange:"نطاق الألم",painNote:"تقييمات الألم قيم ذاتية يدخلها المستخدم وتُعرض فقط كما تم تسجيلها.",
+readyToRecord:"جاهز للتسجيل",idle:"جاهز",timing:"التوقيت جارٍ",tapWhenEnds:"اضغطي عند انتهاء الانقباض.",latestDuration:"آخر مدة",latestInterval:"آخر فاصل",restTime:"وقت الراحة",latestStart:"آخر بداية",
+needThree:"سجلي 3 انقباضات على الأقل لرؤية نمط أوضح.",patternSnapshot:"ملخص النمط",factualTimingOnly:"بيانات زمنية فقط · دون تقييم مرحلة المخاض",
+contractionsWindow:"الانقباضات في الفترة",avgDuration:"متوسط المدة",avgInterval:"متوسط الفاصل",intervalRange:"نطاق الفواصل",pattern:"النمط",
+regularitySupport:"مبني على تغير الفواصل المسجلة؛ لا يقيّم تقدم المخاض.",contractionPattern:"نمط الانقباضات",sharedAxis:"المدة + الفاصل من بداية إلى بداية على محور زمني واحد",
+intervalLegend:"الفاصل · دقائق بين البدايات",durationLegend:"المدة · ثوانٍ",rollingAverage:"المتوسط المتحرك للفاصل",lowerMeansCloser:"القيم الأقل للفاصل تعني وقتاً أقل بين بدايات الانقباضات.",
+historyRegister:"سجل التاريخ",historyHelp:"راجعي أو صححي أو أضيفي ملاحظة أو احذفي أي إدخال.",newSession:"جلسة جديدة",factualSummary:"ملخص واقعي",summaryHelp:"لإيصال الأوقات المسجلة لفريق الولادة.",
+copySummary:"نسخ الملخص",share:"مشاركة",exportCsv:"تصدير CSV",exportJson:"تصدير JSON",displayAccess:"العرض وإمكانية الوصول",language:"اللغة",theme:"المظهر",auto:"تلقائي",dark:"داكن",light:"فاتح",
+textSize:"حجم النص",normal:"عادي",large:"كبير",extraLarge:"كبير جداً",haptics:"استجابة لمسية",rollingAvgSetting:"إظهار المتوسط المتحرك للفاصل",reduceMotion:"تقليل الحركة",
+contactDetails:"بيانات الاتصال",maternityPhone:"هاتف فريق الولادة",emergencyPhone:"رقم الطوارئ المحلي",saveSettings:"حفظ الإعدادات",dataControl:"بياناتك",
+localOnly:"تُحفظ البيانات محلياً على هذا الجهاز فقط. لا حساب ولا مزامنة سحابية.",exportAll:"تصدير كل البيانات (JSON)",deleteSession:"حذف الجلسة المحددة",deleteAll:"حذف كل البيانات المحلية",
+disclaimer:"يسجل ConTrack الأوقات والملاحظات. لا يشخّص المخاض، ولا يحدد اتساع عنق الرحم، ولا يتنبأ بمرحلة المخاض، ولا يستبدل المشورة الطبية المهنية.",
+startContraction:"بدء الانقباض",endContraction:"إنهاء الانقباض",helpCopy:"إذا كنت قلقة بشأن أعراض أو تعتقدين أنك بحاجة إلى تقييم، فاتصلي بفريق الولادة. إذا كان هناك خطر فوري، أو بدا أن الولادة وشيكة وتعذر الانتقال بأمان، فاتصلي بخدمات الطوارئ المحلية.",
+notExhaustive:"هذه الأداة لا تفحص الأعراض العاجلة ولا تستبدل المشورة السريرية.",callMaternity:"الاتصال بفريق الولادة",callEmergency:"الاتصال بالطوارئ",close:"إغلاق",
+editEntry:"تعديل الانقباض",startTime:"وقت البداية",endTime:"وقت النهاية",noteOptional:"ملاحظة (اختياري)",cancel:"إلغاء",save:"حفظ",undo:"تراجع",edit:"تعديل",saved:"تم حفظ الانقباض",
+notEnough:"بيانات غير كافية",mostlyRegular:"منتظم غالباً",variable:"متغير",becomingRegular:"يصبح أكثر انتظاماً",shortened:"قصرت الفواصل خلال الفترة المحددة.",variableTrend:"تظل الفواصل متغيرة خلال الفترة المحددة.",stableTrend:"الفواصل متشابهة تقريباً خلال الفترة المحددة.",notEnoughTrend:"لا توجد بيانات كافية لوصف اتجاه.",
+contractions:"انقباضات",inLast:"خلال آخر",minutes:"دقيقة",all:"الكل",session:"جلسة",current:"الحالية",duration:"المدة",interval:"الفاصل",rest:"الراحة",start:"البداية",end:"النهاية",note:"ملاحظة",delete:"حذف",
+confirmDeleteEntry:"حذف هذا الانقباض؟",confirmNewSession:"بدء جلسة جديدة؟ سيبقى السجل الحالي متاحاً.",confirmDeleteSession:"حذف الجلسة المحددة وكل انقباضاتها؟",confirmDeleteAll:"حذف كل بيانات ConTrack المحلية؟ لا يمكن التراجع.",
+invalidTimes:"يجب أن يكون وقت النهاية بعد البداية.",phoneMissing:"أضيفي رقم الهاتف أولاً في الإعدادات.",copied:"تم نسخ الملخص.",shareFailed:"المشاركة غير متاحة هنا. تم نسخ الملخص بدلاً من ذلك.",
+summaryTitle:"ملخص توقيت الانقباضات",sessionStarted:"بدء الجلسة",latestRecorded:"آخر انقباض مسجل",recordedCount:"الانقباضات المسجلة",avgIntervalLabel:"متوسط الفاصل من بداية إلى بداية",avgDurationLabel:"متوسط المدة",rangeLabel:"نطاق الفواصل",latestRestLabel:"آخر وقت راحة مكتمل",
+noNote:"لا توجد ملاحظة",settingsSaved:"تم حفظ الإعدادات",migrated:"تم الاحتفاظ ببيانات V1 وترحيلها.",chartPoint:"انقباض",rollingAvgShort:"متوسط متحرك"
+},
+ru:{
+tagline:"Таймер схваток · локально и офлайн",urgentHelp:"Срочные симптомы / помощь",track:"Отслеживание",history:"История",summary:"Сводка",settings:"Настройки",
+designStudio:"Студия дизайна",designStudioHelp:"Выберите визуальный стиль. Изменения применяются сразу и сохраняются только на этом устройстве.",designMeta:"Каждый пресет меняет палитру, геометрию углов, типографику и стиль графиков/кнопок. Тёмная/Светлая/Авто работают независимо.",
+latestPain:"Последняя интенсивность боли",painQuestion:"Насколько интенсивной была эта схватка?",painOptional:"Необязательно · можно добавить или изменить позже.",painZero:"0 · Нет боли",painTen:"10 · Худшая вообразимая боль",later:"Позже",painIntensity:"Интенсивность боли",painSubjective:"Субъективная оценка 0–10",notRated:"Не оценено",showPainChart:"Показывать боль под графиком",ratedContractions:"Оценено схваток",painRange:"Диапазон боли",painNote:"Оценки боли — субъективные значения пользователя и отображаются только в записанном виде.",
+readyToRecord:"Готов к записи",idle:"Готов",timing:"Идёт отсчёт",tapWhenEnds:"Нажмите, когда схватка закончится.",latestDuration:"Последняя длительность",latestInterval:"Последний интервал",restTime:"Время отдыха",latestStart:"Последнее начало",
+needThree:"Запишите минимум 3 схватки, чтобы увидеть более ясную картину.",patternSnapshot:"Снимок паттерна",factualTimingOnly:"Только фактическое время · без оценки стадии родов",
+contractionsWindow:"Схваток в окне",avgDuration:"Средняя длительность",avgInterval:"Средний интервал",intervalRange:"Диапазон интервалов",pattern:"Паттерн",
+regularitySupport:"Основано на вариации записанных интервалов; это не оценивает прогресс родов.",contractionPattern:"Паттерн схваток",sharedAxis:"Длительность + интервал от начала до начала на одной временной шкале",
+intervalLegend:"Интервал · минуты между началами",durationLegend:"Длительность · секунды",rollingAverage:"Скользящее среднее интервала",lowerMeansCloser:"Меньший интервал означает меньше времени между началами схваток.",
+historyRegister:"Журнал истории",historyHelp:"Просматривайте, исправляйте, добавляйте заметки или удаляйте записи.",newSession:"Новая сессия",factualSummary:"Фактическая сводка",summaryHelp:"Для передачи записанных временных данных родильной команде.",
+copySummary:"Копировать сводку",share:"Поделиться",exportCsv:"Экспорт CSV",exportJson:"Экспорт JSON",displayAccess:"Экран и доступность",language:"Язык",theme:"Тема",auto:"Авто",dark:"Тёмная",light:"Светлая",
+textSize:"Размер текста",normal:"Обычный",large:"Большой",extraLarge:"Очень большой",haptics:"Тактильная обратная связь",rollingAvgSetting:"Показывать скользящее среднее интервала",reduceMotion:"Уменьшить анимацию",
+contactDetails:"Контакты",maternityPhone:"Телефон родильной команды",emergencyPhone:"Местный номер экстренной помощи",saveSettings:"Сохранить настройки",dataControl:"Ваши данные",
+localOnly:"Данные хранятся только локально на этом устройстве. Без аккаунта и облачной синхронизации.",exportAll:"Экспорт всех данных (JSON)",deleteSession:"Удалить выбранную сессию",deleteAll:"Удалить все локальные данные",
+disclaimer:"ConTrack записывает время и заметки. Он не диагностирует роды, не определяет раскрытие шейки матки, не прогнозирует стадию родов и не заменяет профессиональную медицинскую консультацию.",
+startContraction:"Начать схватку",endContraction:"Завершить схватку",helpCopy:"Если вас беспокоят симптомы или вы считаете, что нужна оценка, свяжитесь с родильной командой. При непосредственной опасности или если роды кажутся неизбежными и безопасно добраться невозможно, звоните в местную экстренную службу.",
+notExhaustive:"Инструмент не выполняет скрининг срочных симптомов и не заменяет клиническую консультацию.",callMaternity:"Позвонить в родильное отделение",callEmergency:"Экстренный вызов",close:"Закрыть",
+editEntry:"Редактировать схватку",startTime:"Время начала",endTime:"Время окончания",noteOptional:"Заметка (необязательно)",cancel:"Отмена",save:"Сохранить",undo:"Отменить",edit:"Изменить",saved:"Схватка сохранена",
+notEnough:"Недостаточно данных",mostlyRegular:"В основном регулярно",variable:"Переменно",becomingRegular:"Становится регулярнее",shortened:"Интервалы сократились за выбранный период.",variableTrend:"Интервалы остаются переменными за выбранный период.",stableTrend:"Интервалы в целом похожи за выбранный период.",notEnoughTrend:"Недостаточно данных для описания тренда.",
+contractions:"схваток",inLast:"за последние",minutes:"мин",all:"Все",session:"Сессия",current:"Текущая",duration:"Длительность",interval:"Интервал",rest:"Отдых",start:"Начало",end:"Конец",note:"Заметка",delete:"Удалить",
+confirmDeleteEntry:"Удалить эту схватку?",confirmNewSession:"Начать новую сессию? Текущая история останется доступной.",confirmDeleteSession:"Удалить выбранную сессию и все её схватки?",confirmDeleteAll:"Удалить ВСЕ локальные данные ConTrack? Отменить невозможно.",
+invalidTimes:"Время окончания должно быть позже начала.",phoneMissing:"Сначала добавьте номер телефона в Настройках.",copied:"Сводка скопирована.",shareFailed:"Поделиться здесь нельзя. Сводка скопирована.",
+summaryTitle:"Сводка времени схваток",sessionStarted:"Сессия начата",latestRecorded:"Последняя записанная схватка",recordedCount:"Записано схваток",avgIntervalLabel:"Средний интервал начало-начало",avgDurationLabel:"Средняя длительность",rangeLabel:"Диапазон интервалов",latestRestLabel:"Последний завершённый отдых",
+noNote:"Нет заметки",settingsSaved:"Настройки сохранены",migrated:"Существующие данные V1 сохранены и перенесены.",chartPoint:"Схватка",rollingAvgShort:"Скользящее среднее"
+},
+ko:{
+tagline:"진통 타이머 · 로컬 및 오프라인",urgentHelp:"긴급 증상 / 도움",track:"기록",history:"기록 내역",summary:"요약",settings:"설정",
+designStudio:"디자인 스튜디오",designStudioHelp:"시각 스타일을 선택하세요. 변경 사항은 즉시 적용되며 이 기기에만 저장됩니다.",designMeta:"각 프리셋은 색상, 모서리 형태, 타이포그래피, 차트/버튼 스타일을 바꿉니다. 다크/라이트/자동 모드는 별도로 유지됩니다.",
+latestPain:"최근 통증 강도",painQuestion:"이번 진통의 강도는 어땠나요?",painOptional:"선택 사항 · 나중에 추가하거나 변경할 수 있습니다.",painZero:"0 · 통증 없음",painTen:"10 · 상상할 수 있는 가장 심한 통증",later:"나중에",painIntensity:"통증 강도",painSubjective:"주관적 0–10 평가",notRated:"평가 안 함",showPainChart:"차트 아래 통증 평가 표시",ratedContractions:"평가된 진통",painRange:"통증 범위",painNote:"통증 평가는 사용자가 입력한 주관적 값이며 기록된 그대로만 표시됩니다.",
+readyToRecord:"기록 준비됨",idle:"대기",timing:"측정 중",tapWhenEnds:"진통이 끝나면 탭하세요.",latestDuration:"최근 지속시간",latestInterval:"최근 간격",restTime:"휴식 시간",latestStart:"최근 시작",
+needThree:"더 명확한 패턴을 보려면 최소 3회의 진통을 기록하세요.",patternSnapshot:"패턴 요약",factualTimingOnly:"시간 데이터만 표시 · 분만 단계 평가 없음",
+contractionsWindow:"선택 구간 진통 수",avgDuration:"평균 지속시간",avgInterval:"평균 간격",intervalRange:"간격 범위",pattern:"패턴",
+regularitySupport:"기록된 간격의 변동을 기반으로 하며 분만 진행을 평가하지 않습니다.",contractionPattern:"진통 패턴",sharedAxis:"지속시간 + 시작-시작 간격을 하나의 시간축에 표시",
+intervalLegend:"간격 · 시작 사이의 분",durationLegend:"지속시간 · 초",rollingAverage:"간격 이동 평균",lowerMeansCloser:"간격 값이 낮을수록 진통 시작 사이 시간이 짧습니다.",
+historyRegister:"기록 내역",historyHelp:"기록을 검토, 수정, 메모 추가 또는 삭제하세요.",newSession:"새 세션",factualSummary:"사실 요약",summaryHelp:"기록된 시간 정보를 의료진에게 전달하기 위한 요약입니다.",
+copySummary:"요약 복사",share:"공유",exportCsv:"CSV 내보내기",exportJson:"JSON 내보내기",displayAccess:"화면 및 접근성",language:"언어",theme:"테마",auto:"자동",dark:"다크",light:"라이트",
+textSize:"글자 크기",normal:"보통",large:"크게",extraLarge:"매우 크게",haptics:"햅틱 피드백",rollingAvgSetting:"간격 이동 평균 표시",reduceMotion:"동작 줄이기",
+contactDetails:"연락처",maternityPhone:"분만팀 전화",emergencyPhone:"현지 긴급전화",saveSettings:"설정 저장",dataControl:"내 데이터",
+localOnly:"진통 데이터는 이 기기에만 저장됩니다. 계정이나 클라우드 동기화가 없습니다.",exportAll:"전체 데이터 내보내기 (JSON)",deleteSession:"선택 세션 삭제",deleteAll:"모든 로컬 데이터 삭제",
+disclaimer:"ConTrack은 시간과 메모를 기록합니다. 분만을 진단하거나 자궁경부 개대를 판단하거나 분만 단계를 예측하지 않으며 전문 의료 조언을 대체하지 않습니다.",
+startContraction:"진통 시작",endContraction:"진통 종료",helpCopy:"증상이 걱정되거나 평가가 필요하다고 느끼면 분만팀에 연락하세요. 즉각적인 위험이 있거나 출산이 임박해 보이고 안전하게 이동할 수 없다면 현지 응급서비스에 연락하세요.",
+notExhaustive:"이 도구는 긴급 증상을 선별하지 않으며 임상 조언을 대체하지 않습니다.",callMaternity:"분만팀에 전화",callEmergency:"응급전화",close:"닫기",
+editEntry:"진통 수정",startTime:"시작 시간",endTime:"종료 시간",noteOptional:"메모 (선택)",cancel:"취소",save:"저장",undo:"실행 취소",edit:"수정",saved:"진통 저장됨",
+notEnough:"데이터 부족",mostlyRegular:"대체로 규칙적",variable:"변동 있음",becomingRegular:"더 규칙적으로 변함",shortened:"선택 기간 동안 간격이 짧아졌습니다.",variableTrend:"선택 기간 동안 간격 변동이 계속됩니다.",stableTrend:"선택 기간 동안 간격이 대체로 비슷합니다.",notEnoughTrend:"추세를 설명할 데이터가 부족합니다.",
+contractions:"회 진통",inLast:"최근",minutes:"분",all:"전체",session:"세션",current:"현재",duration:"지속시간",interval:"간격",rest:"휴식",start:"시작",end:"종료",note:"메모",delete:"삭제",
+confirmDeleteEntry:"이 진통을 삭제할까요?",confirmNewSession:"새 세션을 시작할까요? 현재 기록은 계속 사용할 수 있습니다.",confirmDeleteSession:"선택 세션과 모든 진통을 삭제할까요?",confirmDeleteAll:"모든 로컬 ConTrack 데이터를 삭제할까요? 되돌릴 수 없습니다.",
+invalidTimes:"종료 시간은 시작 시간보다 늦어야 합니다.",phoneMissing:"먼저 설정에서 전화번호를 추가하세요.",copied:"요약이 복사되었습니다.",shareFailed:"여기서는 공유할 수 없습니다. 대신 요약을 복사했습니다.",
+summaryTitle:"진통 시간 요약",sessionStarted:"세션 시작",latestRecorded:"최근 기록 진통",recordedCount:"기록된 진통",avgIntervalLabel:"평균 시작-시작 간격",avgDurationLabel:"평균 지속시간",rangeLabel:"간격 범위",latestRestLabel:"최근 완료된 휴식 시간",
+noNote:"메모 없음",settingsSaved:"설정 저장됨",migrated:"기존 V1 데이터가 보존되어 이전되었습니다.",chartPoint:"진통",rollingAvgShort:"이동 평균"
+},
+ja:{
+tagline:"陣痛タイマー · ローカル＆オフライン",urgentHelp:"緊急症状 / ヘルプ",track:"記録",history:"履歴",summary:"概要",settings:"設定",
+designStudio:"デザインスタジオ",designStudioHelp:"ビジュアルスタイルを選択してください。変更は即時反映され、この端末内に保存されます。",designMeta:"各プリセットは配色、角の形、書体、チャート/ボタンのスタイルを変更します。ダーク/ライト/自動は独立して機能します。",
+latestPain:"最新の痛み強度",painQuestion:"この陣痛の強さはどの程度でしたか？",painOptional:"任意 · 後から追加・変更できます。",painZero:"0 · 痛みなし",painTen:"10 · 想像できる最悪の痛み",later:"後で",painIntensity:"痛みの強度",painSubjective:"主観的 0–10 評価",notRated:"未評価",showPainChart:"チャート下に痛み評価を表示",ratedContractions:"評価済み陣痛",painRange:"痛みの範囲",painNote:"痛み評価はユーザーが入力した主観的な値で、記録された内容のみを表示します。",
+readyToRecord:"記録準備完了",idle:"待機",timing:"計測中",tapWhenEnds:"陣痛が終わったらタップしてください。",latestDuration:"最新の持続時間",latestInterval:"最新の間隔",restTime:"休息時間",latestStart:"最新の開始",
+needThree:"より明確なパターンを見るには少なくとも3回の陣痛を記録してください。",patternSnapshot:"パターンスナップショット",factualTimingOnly:"時間データのみ · 分娩段階の評価はしません",
+contractionsWindow:"期間内の陣痛回数",avgDuration:"平均持続時間",avgInterval:"平均間隔",intervalRange:"間隔範囲",pattern:"パターン",
+regularitySupport:"記録された間隔の変動に基づきます。分娩進行を評価するものではありません。",contractionPattern:"陣痛パターン",sharedAxis:"持続時間 + 開始から開始までの間隔を同一時間軸に表示",
+intervalLegend:"間隔 · 開始間の分数",durationLegend:"持続時間 · 秒",rollingAverage:"間隔の移動平均",lowerMeansCloser:"間隔の値が低いほど、陣痛開始間の時間が短いことを示します。",
+historyRegister:"履歴",historyHelp:"記録の確認、修正、メモ追加、削除ができます。",newSession:"新しいセッション",factualSummary:"事実サマリー",summaryHelp:"記録した時間情報を産科チームに伝えるための要約です。",
+copySummary:"概要をコピー",share:"共有",exportCsv:"CSVを書き出す",exportJson:"JSONを書き出す",displayAccess:"表示とアクセシビリティ",language:"言語",theme:"テーマ",auto:"自動",dark:"ダーク",light:"ライト",
+textSize:"文字サイズ",normal:"標準",large:"大",extraLarge:"特大",haptics:"触覚フィードバック",rollingAvgSetting:"間隔の移動平均を表示",reduceMotion:"動きを減らす",
+contactDetails:"連絡先",maternityPhone:"産科チーム電話",emergencyPhone:"地域の緊急番号",saveSettings:"設定を保存",dataControl:"あなたのデータ",
+localOnly:"陣痛データはこの端末にのみ保存されます。アカウントやクラウド同期はありません。",exportAll:"すべてのデータを書き出す (JSON)",deleteSession:"選択セッションを削除",deleteAll:"すべてのローカルデータを削除",
+disclaimer:"ConTrack は時間とメモを記録します。分娩の診断、子宮口開大の判断、分娩段階の予測は行わず、専門的な医療助言の代わりにはなりません。",
+startContraction:"陣痛開始",endContraction:"陣痛終了",helpCopy:"症状が心配、または診察が必要だと感じる場合は産科チームに連絡してください。緊急の危険がある、または出産が差し迫っていて安全に移動できない場合は地域の救急サービスへ連絡してください。",
+notExhaustive:"このツールは緊急症状のスクリーニングを行わず、臨床的助言の代わりにはなりません。",callMaternity:"産科チームに電話",callEmergency:"緊急通報",close:"閉じる",
+editEntry:"陣痛を編集",startTime:"開始時刻",endTime:"終了時刻",noteOptional:"メモ（任意）",cancel:"キャンセル",save:"保存",undo:"元に戻す",edit:"編集",saved:"陣痛を保存しました",
+notEnough:"データ不足",mostlyRegular:"おおむね規則的",variable:"ばらつきあり",becomingRegular:"より規則的になっている",shortened:"選択期間で間隔が短くなっています。",variableTrend:"選択期間で間隔のばらつきが続いています。",stableTrend:"選択期間で間隔はおおむね同程度です。",notEnoughTrend:"傾向を説明するにはデータが不足しています。",
+contractions:"回の陣痛",inLast:"直近",minutes:"分",all:"すべて",session:"セッション",current:"現在",duration:"持続時間",interval:"間隔",rest:"休息",start:"開始",end:"終了",note:"メモ",delete:"削除",
+confirmDeleteEntry:"この陣痛を削除しますか？",confirmNewSession:"新しいセッションを開始しますか？現在の履歴は引き続き利用できます。",confirmDeleteSession:"選択したセッションとすべての陣痛を削除しますか？",confirmDeleteAll:"すべてのローカル ConTrack データを削除しますか？元に戻せません。",
+invalidTimes:"終了時刻は開始時刻より後である必要があります。",phoneMissing:"先に設定で電話番号を追加してください。",copied:"概要をコピーしました。",shareFailed:"ここでは共有できません。代わりに概要をコピーしました。",
+summaryTitle:"陣痛時間概要",sessionStarted:"セッション開始",latestRecorded:"最新の記録済み陣痛",recordedCount:"記録した陣痛",avgIntervalLabel:"平均開始-開始間隔",avgDurationLabel:"平均持続時間",rangeLabel:"間隔範囲",latestRestLabel:"最新の完了休息時間",
+noNote:"メモなし",settingsSaved:"設定を保存しました",migrated:"既存の V1 データを保持して移行しました。",chartPoint:"陣痛",rollingAvgShort:"移動平均"
 }};
 
-function load(){
+function t(k){return (I[state.language]||I.en)[k]||I.en[k]||k}
+function currentSession(){return state.sessions.find(s=>s.id===state.selectedSessionId)||state.sessions.at(-1)}
+function activeSession(){return state.sessions.at(-1)}
+function normalizeContraction(c){
+  return {...c,note:c.note||"",painIntensity:(Number.isInteger(c.painIntensity)&&c.painIntensity>=0&&c.painIntensity<=10)?c.painIntensity:null,painRatedAt:c.painRatedAt||null}
+}
+function normalizeAllContractions(){
+  state.sessions.forEach(s=>{s.contractions=(s.contractions||[]).map(normalizeContraction)})
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function deep(x){return JSON.parse(JSON.stringify(x))}
+function loadState(){
   try{
-    const s=JSON.parse(localStorage.getItem(STORAGE));
-    if(!s) return structuredClone(defaultState);
-    return {
-      ...structuredClone(defaultState),...s,
-      settings:{...defaultState.settings,...(s.settings||{})},
-      session:{...defaultState.session,...(s.session||{}),contractions:s.session?.contractions||[],events:s.session?.events||[]}
-    };
-  }catch(e){return structuredClone(defaultState)}
+    const existing=JSON.parse(localStorage.getItem(KEY));
+    if(existing?.version===2){
+      if(!existing.selectedSessionId) existing.selectedSessionId=existing.sessions?.at(-1)?.id;
+      existing.settings={...baseState().settings,...(existing.settings||{})};
+      return existing
+    }
+  }catch{}
+  const fresh=baseState();
+  try{
+    const old=JSON.parse(localStorage.getItem(V1KEY));
+    if(old?.session?.contractions?.length){
+      const sid=uid(), cs=old.session.contractions.map(c=>({id:c.id||uid(),start:+c.start,end:+c.end,note:"",painIntensity:null,painRatedAt:null})).filter(c=>c.end>c.start);
+      fresh.sessions=[{id:sid,startedAt:+(old.session.startedAt||cs[0]?.start||Date.now()),endedAt:null,contractions:cs}];
+      fresh.selectedSessionId=sid; fresh.language=old.language||"en"; fresh.runningStart=old.runningStart||null;
+      fresh.settings={...fresh.settings,haptics:true,maternityPhone:old.settings?.maternityPhone||"",emergencyPhone:old.settings?.emergencyPhone||""};
+      localStorage.setItem(KEY,JSON.stringify(fresh));
+      return fresh;
+    }
+  }catch{}
+  fresh.selectedSessionId=fresh.sessions[0].id; return fresh;
 }
-function save(){localStorage.setItem(STORAGE,JSON.stringify(state))}
-function tr(k){return (T[state.language]||T.de)[k]||T.de[k]||k}
-function applyLanguage(){
-  document.documentElement.lang=state.language;
-  $("#lang").value=state.language;
-  $$("[data-i18n]").forEach(el=>el.textContent=tr(el.dataset.i18n));
-  $("#offlineBadge").textContent=tr("offline");
-  render();
-}
-function sec(ms){return Math.max(0,Math.round(ms/1000))}
+function dur(c){return Math.max(0,Math.round((c.end-c.start)/1000))}
 function fmtSec(s){
-  if(s==null||!isFinite(s))return "—";
-  const m=Math.floor(s/60), ss=Math.round(s%60);
-  return `${String(m).padStart(2,"0")}:${String(ss).padStart(2,"0")}`;
+  if(s==null||!isFinite(s))return t("notEnough");
+  s=Math.max(0,Math.round(s));const m=Math.floor(s/60),ss=s%60;return `${String(m).padStart(2,"0")}:${String(ss).padStart(2,"0")}`;
 }
-function fmtClock(ts){return new Date(ts).toLocaleTimeString(state.language==="zh"?"zh-CN":state.language==="hi"?"hi-IN":state.language==="en"?"en-GB":"de-DE",{hour:"2-digit",minute:"2-digit",hour12:false})}
-function duration(c){return sec(c.end-c.start)}
-function intervals(cs=state.session.contractions){return cs.slice(1).map((c,i)=>({ts:c.start,seconds:(c.start-cs[i].start)/1000}))}
-function mean(a){return a.length?a.reduce((x,y)=>x+y,0)/a.length:null}
-function cv(a){if(a.length<2)return null;const m=mean(a);const sd=Math.sqrt(mean(a.map(x=>(x-m)**2)));return m?sd/m:null}
-function trend(a){if(a.length<4)return 0;const n=a.length, xs=[...Array(n).keys()], xm=mean(xs), ym=mean(a);const den=xs.reduce((s,x)=>s+(x-xm)**2,0);return den?xs.reduce((s,x,i)=>s+(x-xm)*(a[i]-ym),0)/den:0}
-function last(arr,n){return arr.slice(Math.max(0,arr.length-n))}
-function safety(){
-  const cs=state.session.contractions, ev=state.session.events;
-  const recentEvents=ev.filter(e=>Date.now()-e.ts<24*3600e3);
-  if(recentEvents.some(e=>e.type==="push")) return {level:"emergency",reason:"pushUrge"};
-  const reasons=[];
-  if(recentEvents.some(e=>e.type==="water")) reasons.push("waterReason");
-  if(recentEvents.some(e=>e.type==="bleeding")) reasons.push("bleedingReason");
-  if(recentEvents.some(e=>e.type==="movement")) reasons.push("movementReason");
-  if(cs.some(c=>duration(c)>120)) reasons.push("longContraction");
-  const starts=cs.map(c=>c.start);
-  for(let i=0;i<starts.length;i++){
-    const n=starts.filter(t=>t>=starts[i] && t<=starts[i]+10*60e3).length;
-    if(n>=6){reasons.push("sixInTen");break}
+function clock(ts,sec=false){if(!ts)return t("notEnough");return new Date(ts).toLocaleTimeString(state.language==="de"?"de-DE":state.language==="zh"?"zh-CN":state.language==="hi"?"hi-IN":"en-GB",{hour:"2-digit",minute:"2-digit",second:sec?"2-digit":undefined,hour12:false})}
+function dateTime(ts){return new Date(ts).toLocaleString(state.language==="de"?"de-DE":state.language==="zh"?"zh-CN":state.language==="hi"?"hi-IN":"en-GB",{dateStyle:"medium",timeStyle:"short"})}
+function intervalAt(cs,i){return i>0?(cs[i].start-cs[i-1].start)/1000:null}
+function restAt(cs,i){return i>0?(cs[i].start-cs[i-1].end)/1000:null}
+function mean(a){return a.length?a.reduce((s,x)=>s+x,0)/a.length:null}
+function sd(a){if(a.length<2)return null;const m=mean(a);return Math.sqrt(mean(a.map(x=>(x-m)**2)))}
+function cv(a){const m=mean(a),s=sd(a);return m&&s!=null?s/m:null}
+function slope(a){if(a.length<3)return 0;const xm=(a.length-1)/2,ym=mean(a);let num=0,den=0;a.forEach((y,x)=>{num+=(x-xm)*(y-ym);den+=(x-xm)**2});return den?num/den:0}
+function withDerived(session){
+  const cs=[...session.contractions].sort((a,b)=>a.start-b.start);
+  return cs.map((c,i)=>({...c,duration:dur(c),interval:intervalAt(cs,i),rest:restAt(cs,i),number:i+1}));
+}
+function windowData(session,mins,live=true){
+  const rows=withDerived(session); if(mins==="all")return rows;
+  const anchor=(live && session.id===activeSession().id && !session.endedAt)?Date.now():(rows.at(-1)?.start||Date.now());
+  const from=anchor-Number(mins)*60e3;return rows.filter(r=>r.start>=from && r.start<=anchor);
+}
+function patternLabel(rows){
+  const ints=rows.map(r=>r.interval).filter(x=>x!=null);
+  if(ints.length<3)return {label:t("notEnough"),trend:t("notEnoughTrend")};
+  const v=cv(ints),sl=slope(ints);
+  if(sl < -12 && v<0.38)return {label:t("becomingRegular"),trend:t("shortened")};
+  if(v<=0.20)return {label:t("mostlyRegular"),trend:Math.abs(sl)<6?t("stableTrend"):t("shortened")};
+  return {label:t("variable"),trend:t("variableTrend")};
+}
+function localInput(ts){const d=new Date(ts),p=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`}
+function applyDesign(){
+  const design=state.settings.design||"calm";
+  document.documentElement.dataset.design=design;
+  const names={calm:"Calm Mint",ocean:"Ocean Focus",warm:"Warm Nest",lavender:"Lavender Soft",mono:"Mono High Contrast"};
+  const n=$("#liveDesignName"); if(n)n.textContent=names[design]||names.calm;
+  $$(".preset-card").forEach(b=>{
+    const active=b.dataset.preset===design;
+    b.setAttribute("aria-pressed",String(active));
+    const check=b.querySelector(".preset-check"); if(check)check.textContent=active?"✓":"";
+  });
+}
+function applyTheme(){
+  applyDesign();
+  const pref=state.settings.theme;
+  let theme=pref==="auto"?(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):pref;
+  document.documentElement.dataset.theme=theme;
+  document.documentElement.dataset.text=state.settings.textSize;
+  document.documentElement.style.setProperty("--motion",state.settings.reduceMotion?"0":"1");
+}
+function applyLang(){
+  document.documentElement.lang=state.language;
+  document.documentElement.dir=(state.language==="fa"||state.language==="ar")?"rtl":"ltr";
+  $$("[data-i18n]").forEach(el=>{const key=el.dataset.i18n;if(I.en[key])el.textContent=t(key)});
+  $("#language").value=state.language;
+  $("#quickLanguage").value=state.language;
+  renderAll();
+}
+function haptic(pattern){if(state.settings.haptics)try{navigator.vibrate?.(pattern)}catch{}}
+async function lockScreen(){try{if("wakeLock" in navigator)wakeLock=await navigator.wakeLock.request("screen")}catch{}}
+function unlockScreen(){try{wakeLock?.release()}catch{}wakeLock=null}
+
+function timerTick(){
+  const s=activeSession(),rows=withDerived(s),last=rows.at(-1);
+  if(state.runningStart){
+    const elapsed=(Date.now()-state.runningStart)/1000;
+    $("#heroTimer").textContent=fmtSec(elapsed);$("#miniTimer").textContent=fmtSec(elapsed);
+    $("#restTime").textContent=last?fmtSec(Math.max(0,(state.runningStart-last.end)/1000)):t("notEnough");
+  }else{
+    $("#heroTimer").textContent="00:00";
+    const rest=last?Math.max(0,(Date.now()-last.end)/1000):null;
+    $("#miniTimer").textContent=rest==null?"00:00":fmtSec(rest);
+    $("#restTime").textContent=rest==null?t("notEnough"):fmtSec(rest);
   }
-  const gw=parseFloat(state.settings.gestWeek);
-  if(gw && gw<37 && cs.length>=2) reasons.push("preterm");
-  if(reasons.length) return {level:"urgent",reason:reasons.map(tr).join(" · ")};
-  return null;
 }
-function evaluate(){
-  const cs=state.session.contractions, ints=intervals();
-  const s=safety(); if(s) return s;
-  if(!cs.length) return {level:"none"};
-  if(cs.length===1) return {level:"one"};
-  const li=last(ints.map(x=>x.seconds/60),4), ld=last(cs.map(duration),5);
-  const avgI=mean(li), reg=cv(li);
-  const contact = li.length>=3 && avgI<=Number(state.settings.intervalThreshold||5) && (reg==null || reg<=0.35);
-  if(contact) return {level:"contact"};
-  const allInts=last(ints.map(x=>x.seconds/60),5), allDur=last(cs.map(duration),5);
-  const becoming=(allInts.length>=4 && trend(allInts)<-0.18) || (allDur.length>=4 && trend(allDur)>2) || (allInts.length>=4 && cv(allInts)<0.25);
-  if(becoming) return {level:"increasing"};
-  return {level:"observe"};
+function startTimer(){
+  if(currentSession().id!==activeSession().id){state.selectedSessionId=activeSession().id}
+  state.runningStart=Date.now();save();renderTimerState();timerTick();timerId=setInterval(timerTick,250);lockScreen();haptic(35)
 }
-function regularity(){
-  const a=last(intervals().map(x=>x.seconds),5), v=cv(a);
-  if(v==null)return ["—",""];
-  if(v<=0.15)return [tr("high"),"ok"];
-  if(v<=0.30)return [tr("medium"),"warn"];
-  return [tr("low"),"danger"];
+function endTimer(){
+  if(!state.runningStart)return;
+  const end=Date.now();if(end-state.runningStart<800)return;
+  const c={id:uid(),start:state.runningStart,end,note:"",painIntensity:null,painRatedAt:null};
+  activeSession().contractions.push(c);activeSession().contractions.sort((a,b)=>a.start-b.start);
+  state.runningStart=null;state.undo={sessionId:activeSession().id,contraction:deep(c),expiresAt:Date.now()+12000};save();
+  clearInterval(timerId);timerId=null;unlockScreen();haptic([35,30,35]);showUndo();renderAll()
 }
-function render(){
-  const cs=state.session.contractions, ints=intervals(), ev=evaluate();
-  const map={
-    none:["noData","noDataCopy",""],one:["oneRecorded","oneCopy",""],observe:["observe","observeCopy",""],
-    increasing:["increasing","increasingCopy","warn"],contact:["contact","contactCopy","warn"],
-    urgent:["urgent","urgentCopy","danger"],emergency:["emergency","emergencyCopy","danger"]
-  }[ev.level];
-  $("#statusCard").className="card status-card "+(map[2]||"");
-  $("#statusTitle").textContent=tr(map[0]);
-  $("#statusCopy").textContent=tr(map[1])+(ev.reason?` · ${ev.reason}`:"");
-  const lc=cs.at(-1), li=ints.at(-1);
-  $("#lastDuration").textContent=lc?fmtSec(duration(lc)):"—";
-  $("#lastInterval").textContent=li?fmtSec(li.seconds):"—";
-  const avg=mean(last(ints.map(x=>x.seconds),5)); $("#avgInterval").textContent=avg?fmtSec(avg):"—";
-  const [r,rc]=regularity(); $("#regularityPill").textContent=`${tr("regularity")}: ${r}`;
-  $("#countPill").textContent=`${cs.length} ${tr("count")}`;
-  $("#undoBtn").disabled=!cs.length || !!state.runningStart; $("#editBtn").disabled=!cs.length || !!state.runningStart;
-  $("#contactButtons").hidden=!(["contact","urgent","emergency"].includes(ev.level));
-  $("#emergencyCallBtn").style.display=ev.level==="emergency"?"block":"none";
-  renderHistory(); drawAll();
+function renderTimerState(){
+  const running=!!state.runningStart;
+  $("#hero").classList.toggle("running",running);
+  $("#timerBtn").classList.toggle("active",running);
+  $("#timerBtn").textContent=running?t("endContraction"):t("startContraction");
+  $("#heroHelper").textContent=running?t("tapWhenEnds"):t("readyToRecord");
+  $("#stateText").textContent=running?t("timing"):t("idle");
+  $("#miniLabel").textContent=running?t("duration"):t("restTime");
+}
+function showUndo(){
+  clearTimeout(undoTimer);
+  const u=state.undo;if(!u||u.expiresAt<=Date.now()){state.undo=null;save();$("#undoBar").classList.remove("show");return}
+  $("#undoMsg").textContent=`${t("saved")} · ${fmtSec(dur(u.contraction))}`;
+  $("#undoBar").classList.add("show");
+  renderPainCapture(u);
+  undoTimer=setTimeout(()=>{$("#undoBar").classList.remove("show");$("#painCapture").classList.remove("show");state.undo=null;save()},Math.max(0,u.expiresAt-Date.now()))
+}
+function undoLast(){
+  const u=state.undo;if(!u)return;const s=state.sessions.find(x=>x.id===u.sessionId);if(s)s.contractions=s.contractions.filter(c=>c.id!==u.contraction.id);
+  state.undo=null;save();$("#undoBar").classList.remove("show");renderAll()
+}
+function renderPainCapture(u=state.undo){
+  const box=$("#painCapture"),grid=$("#painQuickGrid");
+  if(!u){box.classList.remove("show");return}
+  const s=state.sessions.find(x=>x.id===u.sessionId), c=s?.contractions.find(x=>x.id===u.contraction.id);
+  if(!c){box.classList.remove("show");return}
+  grid.innerHTML="";
+  for(let i=0;i<=10;i++){
+    const b=document.createElement("button");
+    b.className="pain-choice";b.type="button";b.textContent=String(i);
+    b.setAttribute("aria-pressed",String(c.painIntensity===i));
+    b.setAttribute("aria-label",`${t("painIntensity")} ${i} / 10`);
+    b.onclick=()=>setPain(c.id,i,u.sessionId,true);
+    grid.appendChild(b);
+  }
+  box.classList.add("show");
+}
+function setPain(id,value,sessionId=state.selectedSessionId,fromQuick=false){
+  const s=state.sessions.find(x=>x.id===sessionId)||currentSession(),c=s?.contractions.find(x=>x.id===id);
+  if(!c)return;
+  c.painIntensity=value==null?null:Number(value);
+  c.painRatedAt=value==null?null:Date.now();
+  if(state.undo?.contraction?.id===id){
+    state.undo.contraction.painIntensity=c.painIntensity;
+    state.undo.contraction.painRatedAt=c.painRatedAt;
+  }
+  save();haptic(20);
+  if(fromQuick){
+    $("#painCapture").classList.remove("show");
+    toast(`${t("painIntensity")}: ${c.painIntensity} / 10`);
+  }
+  renderAll();
+}
+
+
+function renderPrimary(){
+  const rows=withDerived(activeSession()),last=rows.at(-1);
+  $("#latestDuration").textContent=last?fmtSec(last.duration):t("notEnough");
+  $("#latestInterval").textContent=last?.interval!=null?fmtSec(last.interval):t("notEnough");
+  $("#latestStart").textContent=last?clock(last.start):t("notEnough");
+  const painRow=$("#latestPainRow");
+  if(last){
+    painRow.classList.add("show");
+    $("#latestPainValue").textContent=last.painIntensity==null?t("notRated"):`${last.painIntensity} / 10`;
+    $("#latestPainEdit").dataset.id=last.id;
+  }else{
+    painRow.classList.remove("show");
+  }
+  $("#threeTip").style.display=rows.length<3?"block":"none";
+  renderTimerState();timerTick()
+}
+function createChips(host,vals,selected,handler){
+  host.innerHTML="";
+  vals.forEach(v=>{
+    const b=document.createElement("button");b.className="chip";b.type="button";b.dataset.value=v;
+    b.setAttribute("aria-pressed",String(v===selected));
+    b.textContent=v==="all"?t("all"):(v<120?`${v}m`:`${v/60}h`);
+    b.onclick=()=>handler(v);host.appendChild(b)
+  })
+}
+function renderSnapshot(){
+  createChips($("#kpiChips"),windows,state.selectedKpi,v=>{state.selectedKpi=Number(v);state.selectedChart=Number(v);save();renderSnapshot();renderChart()});
+  const rows=windowData(activeSession(),state.selectedKpi,true), ints=rows.map(r=>r.interval).filter(x=>x!=null);
+  const ds=rows.map(r=>r.duration), p=patternLabel(rows);
+  $("#kpiCount").textContent=rows.length?`${rows.length}`:t("notEnough");
+  $("#kpiAvgDuration").textContent=ds.length?fmtSec(mean(ds)):t("notEnough");
+  $("#kpiAvgInterval").textContent=ints.length?fmtSec(mean(ints)):t("notEnough");
+  $("#kpiRange").textContent=ints.length?`${fmtSec(Math.min(...ints))}–${fmtSec(Math.max(...ints))}`:t("notEnough");
+  $("#kpiPattern").textContent=p.label;
+}
+function rollingAverage(rows,n=3){
+  return rows.map((r,i)=>{const vals=rows.slice(Math.max(0,i-n+1),i+1).map(x=>x.interval).filter(x=>x!=null);return vals.length>=2?mean(vals):null})
+}
+function renderChart(){
+  let selected=state.selectedChart;
+  const allRows=withDerived(activeSession());
+  if(allRows.length && selected===60){
+    const span=(allRows.at(-1).start-allRows[0].start)/60000;
+    if(span<60) selected="all";
+  }
+  createChips($("#chartChips"),chartWindows,selected,v=>{state.selectedChart=v==="all"?"all":Number(v);save();renderChart()});
+  const rows=windowData(activeSession(),selected,true), svg=$("#patternChart");
+  const W=520,H=260,pad={l:55,r:48,t:20,b:38},pw=W-pad.l-pad.r,ph=H-pad.t-pad.b;
+  svg.innerHTML=`<title id="chartTitle">${t("contractionPattern")}</title><desc id="chartDesc">${t("sharedAxis")}</desc>`;
+  const ns="http://www.w3.org/2000/svg";
+  const mk=(tag,attrs={},text="")=>{const e=document.createElementNS(ns,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));if(text)e.textContent=text;svg.appendChild(e);return e};
+  const ints=rows.map(r=>r.interval/60).filter(x=>isFinite(x)), ds=rows.map(r=>r.duration);
+  const maxI=Math.max(10,...ints,1), maxD=Math.max(90,...ds,1);
+  const yI=v=>pad.t+ph*(1-v/maxI), yD=v=>pad.t+ph*(1-v/maxD);
+  const minTs=rows[0]?.start||Date.now(),maxTs=rows.at(-1)?.start||minTs+1,span=Math.max(1,maxTs-minTs);
+  const x=ts=>pad.l+((ts-minTs)/span)*pw;
+  [0,.5,1].forEach(f=>{
+    const yy=pad.t+ph*(1-f);mk("line",{x1:pad.l,y1:yy,x2:W-pad.r,y2:yy,stroke:"var(--line)","stroke-width":"1"});
+    mk("text",{x:pad.l-7,y:yy+4,fill:"var(--muted)","font-size":"10","text-anchor":"end"},(maxI*f).toFixed(f?1:0));
+    mk("text",{x:W-pad.r+7,y:yy+4,fill:"var(--muted)","font-size":"10","text-anchor":"start"},Math.round(maxD*f));
+  });
+  mk("text",{x:12,y:H/2,fill:"var(--muted)","font-size":"9",transform:`rotate(-90 12 ${H/2})`,"text-anchor":"middle"},t("intervalLegend"));
+  mk("text",{x:W-8,y:H/2,fill:"var(--muted)","font-size":"9",transform:`rotate(90 ${W-8} ${H/2})`,"text-anchor":"middle"},t("durationLegend"));
+  if(!rows.length){mk("text",{x:W/2,y:H/2,fill:"var(--muted)","font-size":"14","text-anchor":"middle"},t("notEnough"));$("#trendCopy").textContent=t("notEnoughTrend");$("#chartDetails").classList.remove("show");$("#painStrip").classList.remove("show");return}
+  const barW=Math.max(6,Math.min(15,pw/Math.max(8,rows.length*1.7)));
+  rows.forEach(r=>{
+    const xx=x(r.start), yy=yD(r.duration);
+    const bar=mk("rect",{x:xx-barW/2,y:yy,width:barW,height:pad.t+ph-yy,fill:"transparent",stroke:"var(--accent)","stroke-width":"2",rx:"2",tabindex:"0",role:"button","aria-label":`${t("chartPoint")} ${r.number}, ${t("start")} ${clock(r.start,true)}, ${t("duration")} ${fmtSec(r.duration)}, ${t("interval")} ${r.interval!=null?fmtSec(r.interval):t("notEnough")}`});
+    bar.addEventListener("click",()=>showPoint(r));bar.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();showPoint(r)}})
+  });
+  const lineRows=rows.filter(r=>r.interval!=null);
+  if(lineRows.length){
+    const pts=lineRows.map(r=>`${x(r.start)},${yI(r.interval/60)}`).join(" ");
+    mk("polyline",{points:pts,fill:"none",stroke:"var(--blue)","stroke-width":"3","stroke-linejoin":"round","stroke-linecap":"round"});
+    lineRows.forEach(r=>{
+      const c=mk("circle",{cx:x(r.start),cy:yI(r.interval/60),r:"6",fill:"var(--surface2)",stroke:"var(--blue)","stroke-width":"3",tabindex:"0",role:"button","aria-label":`${t("chartPoint")} ${r.number}, ${t("start")} ${clock(r.start,true)}, ${t("interval")} ${fmtSec(r.interval)}, ${t("duration")} ${fmtSec(r.duration)}`});
+      c.addEventListener("click",()=>showPoint(r));c.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();showPoint(r)}})
+    })
+  }
+  if(state.settings.rollingAverage && rows.length>=3){
+    const av=rollingAverage(rows), pts=rows.map((r,i)=>av[i]!=null?`${x(r.start)},${yI(av[i]/60)}`:null).filter(Boolean).join(" ");
+    if(pts)mk("polyline",{points:pts,fill:"none",stroke:"var(--amber)","stroke-width":"2","stroke-dasharray":"6 5"});
+  }
+  $("#avgLegend").style.display=state.settings.rollingAverage?"flex":"none";
+  const labels=[rows[0],rows[Math.floor((rows.length-1)/2)],rows.at(-1)].filter((r,i,a)=>a.findIndex(q=>q.start===r.start)===i);
+  labels.forEach(r=>mk("text",{x:x(r.start),y:H-12,fill:"var(--muted)","font-size":"10","text-anchor":"middle"},clock(r.start)));
+  const p=patternLabel(rows);$("#trendCopy").textContent=p.trend;
+  $("#chartA11y").textContent=rows.map(r=>`${t("chartPoint")} ${r.number}. ${t("start")} ${clock(r.start,true)}. ${t("duration")} ${fmtSec(r.duration)}. ${t("interval")} ${r.interval!=null?fmtSec(r.interval):t("notEnough")}. ${t("painIntensity")} ${r.painIntensity==null?t("notRated"):`${r.painIntensity} / 10`}.`).join(" ");
+  renderPainChart(rows)
+}
+
+function renderPainChart(rows){
+  const wrap=$("#painStrip"),svg=$("#painChart");
+  if(!state.settings.showPainChart){wrap.classList.remove("show");return}
+  const rated=rows.filter(r=>r.painIntensity!=null);
+  if(!rated.length){wrap.classList.remove("show");return}
+  wrap.classList.add("show");
+  const W=520,H=86,pad={l:28,r:12,t:8,b:20},pw=W-pad.l-pad.r,ph=H-pad.t-pad.b;
+  const ns="http://www.w3.org/2000/svg";svg.innerHTML=`<title id="painChartTitle">${t("painIntensity")}</title><desc id="painChartDesc">${t("painSubjective")}</desc>`;
+  const mk=(tag,attrs={},text="")=>{const e=document.createElementNS(ns,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));if(text)e.textContent=text;svg.appendChild(e);return e};
+  const all=rows, minTs=all[0]?.start||Date.now(),maxTs=all.at(-1)?.start||minTs+1,span=Math.max(1,maxTs-minTs);
+  const x=ts=>pad.l+((ts-minTs)/span)*pw, y=v=>pad.t+ph*(1-v/10);
+  [0,5,10].forEach(v=>{const yy=y(v);mk("line",{x1:pad.l,y1:yy,x2:W-pad.r,y2:yy,stroke:"var(--line)","stroke-width":"1"});mk("text",{x:pad.l-6,y:yy+3,fill:"var(--muted)","font-size":"9","text-anchor":"end"},String(v))});
+  rated.forEach(r=>{
+    const c=mk("circle",{cx:x(r.start),cy:y(r.painIntensity),r:"5",fill:"var(--surface2)",stroke:"var(--accent)","stroke-width":"3",tabindex:"0",role:"button","aria-label":`${t("chartPoint")} ${r.number}, ${t("painIntensity")} ${r.painIntensity} / 10`});
+    c.addEventListener("click",()=>showPoint(r));c.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();showPoint(r)}})
+  });
+}
+
+function showPoint(r){
+  const box=$("#chartDetails");
+  box.innerHTML=`<b>${t("chartPoint")} ${r.number}</b><br>${t("start")}: ${clock(r.start,true)}<br>${t("end")}: ${clock(r.end,true)}<br>${t("duration")}: ${fmtSec(r.duration)}<br>${t("interval")}: ${r.interval!=null?fmtSec(r.interval):t("notEnough")}<br>${t("rest")}: ${r.rest!=null?fmtSec(r.rest):t("notEnough")}<br>${t("painIntensity")}: ${r.painIntensity==null?t("notRated"):`${r.painIntensity} / 10`}<br>${t("note")}: ${escapeHtml(r.note||t("noNote"))}`;
+  box.classList.add("show")
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+
+function renderSessions(){
+  const sel=$("#sessionSelect");sel.innerHTML="";
+  state.sessions.slice().reverse().forEach((s,idx)=>{
+    const o=document.createElement("option");o.value=s.id;o.textContent=`${t("session")} · ${dateTime(s.startedAt)}${s.id===activeSession().id?` · ${t("current")}`:""}`;sel.appendChild(o)
+  });sel.value=state.selectedSessionId||activeSession().id
 }
 function renderHistory(){
-  const host=$("#history"), cs=last(state.session.contractions,6).reverse();
-  host.innerHTML="";
-  if(!cs.length){host.innerHTML=`<div class="status-copy">${tr("noData")}</div>`;return}
-  cs.forEach(c=>{
-    const ix=state.session.contractions.findIndex(x=>x.id===c.id), prev=state.session.contractions[ix-1];
-    const it=prev?(c.start-prev.start)/1000:null;
-    const row=document.createElement("div"); row.className="row";
-    row.innerHTML=`<b>${fmtClock(c.start)}</b><span><span class="muted">${tr("duration")}</span> <b>${fmtSec(duration(c))}</b></span><span><span class="muted">${tr("interval")}</span> <b>${it?fmtSec(it):"—"}</b></span><button class="edit-mini" aria-label="edit">✎</button>`;
-    row.querySelector("button").onclick=()=>openEdit(c.id); host.appendChild(row);
+  renderSessions();const s=currentSession(),rows=withDerived(s),host=$("#historyList");host.innerHTML="";
+  if(!rows.length){host.innerHTML=`<div class="notice">${t("notEnough")}</div>`;return}
+  rows.slice().reverse().forEach(r=>{
+    const el=document.createElement("div");el.className="entry";
+    el.innerHTML=`<div class="entry-num">${r.number}</div><div class="entry-main"><div class="time">${clock(r.start,true)} → ${clock(r.end,true)}</div><div class="meta">${t("duration")} ${fmtSec(r.duration)} · ${t("interval")} ${r.interval!=null?fmtSec(r.interval):t("notEnough")} · ${t("rest")} ${r.rest!=null?fmtSec(r.rest):t("notEnough")}</div><div class="pain-line">${t("painIntensity")}: ${r.painIntensity==null?t("notRated"):`${r.painIntensity} / 10`}</div>${r.note?`<div class="note-tag">${escapeHtml(r.note)}</div>`:""}</div><div class="entry-actions"><button aria-label="${t("edit")}" data-edit="${r.id}">✎</button></div>`;
+    host.appendChild(el)
   });
+  $$("[data-edit]").forEach(b=>b.onclick=()=>openEdit(b.dataset.edit))
 }
-function setupCanvas(canvas){
-  const rect=canvas.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
-  canvas.width=Math.round(rect.width*dpr);canvas.height=Math.round(150*dpr);
-  const ctx=canvas.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);return {ctx,w:rect.width,h:150};
-}
-function drawChart(canvas,points,opt){
-  const {ctx,w,h}=setupCanvas(canvas); ctx.clearRect(0,0,w,h);
-  const pad={l:34,r:10,t:12,b:25}, pw=w-pad.l-pad.r, ph=h-pad.t-pad.b;
-  const text="#8293aa", grid="#243248";
-  ctx.font="10px -apple-system, sans-serif"; ctx.lineWidth=1;
-  const ys=opt.yTicks;
-  ys.forEach(y=>{
-    const py=pad.t+ph*(1-(y-opt.min)/(opt.max-opt.min));
-    ctx.strokeStyle=grid;ctx.beginPath();ctx.moveTo(pad.l,py);ctx.lineTo(w-pad.r,py);ctx.stroke();
-    ctx.fillStyle=text;ctx.textAlign="right";ctx.fillText(String(y),pad.l-5,py+3);
-  });
-  if(opt.threshold!=null){
-    const py=pad.t+ph*(1-(opt.threshold-opt.min)/(opt.max-opt.min));
-    ctx.strokeStyle="#fbbf24";ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(pad.l,py);ctx.lineTo(w-pad.r,py);ctx.stroke();ctx.setLineDash([]);
-  }
-  if(!points.length){ctx.fillStyle=text;ctx.textAlign="center";ctx.fillText("—",w/2,h/2);return}
-  const t0=points[0].ts, t1=points.at(-1).ts, span=Math.max(1,t1-t0);
-  const xy=points.map(p=>({x:pad.l+((p.ts-t0)/span)*pw,y:pad.t+ph*(1-(Math.min(opt.max,Math.max(opt.min,p.val))-opt.min)/(opt.max-opt.min)),...p}));
-  if(xy.length===1)xy[0].x=pad.l+pw/2;
-  ctx.strokeStyle=opt.color;ctx.lineWidth=2.2;ctx.beginPath();xy.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();
-  xy.forEach(p=>{ctx.fillStyle=opt.color;ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill()});
-  const labels=[points[0],points[Math.floor((points.length-1)/2)],points.at(-1)].filter((p,i,a)=>a.findIndex(x=>x.ts===p.ts)===i);
-  labels.forEach(p=>{const x=points.length===1?pad.l+pw/2:pad.l+((p.ts-t0)/span)*pw;ctx.fillStyle=text;ctx.textAlign="center";ctx.fillText(fmtClock(p.ts),x,h-7)});
-}
-function drawAll(){
-  const cs=last(state.session.contractions,20), ints=last(intervals(),20);
-  const imax=Math.max(12,Number(state.settings.intervalThreshold||5)*2,...ints.map(x=>x.seconds/60));
-  drawChart($("#intervalCanvas"),ints.map(x=>({ts:x.ts,val:x.seconds/60})),{min:0,max:Math.ceil(imax),yTicks:[0,Math.round(imax/2),Math.ceil(imax)],threshold:Number(state.settings.intervalThreshold||5),color:"#38bdf8"});
-  const dmax=Math.max(120,...cs.map(duration));
-  drawChart($("#durationCanvas"),cs.map(c=>({ts:c.start,val:duration(c)})),{min:0,max:Math.ceil(dmax/30)*30,yTicks:[0,60,Math.ceil(dmax/30)*30].filter((x,i,a)=>a.indexOf(x)===i),threshold:Number(state.settings.durationThreshold||60),color:"#5eead4"});
-}
-async function wake(){
-  try{if("wakeLock" in navigator)wakeLock=await navigator.wakeLock.request("screen")}catch(e){}
-}
-function releaseWake(){try{wakeLock?.release()}catch(e){}wakeLock=null}
-function tick(){
-  if(!state.runningStart){$("#timer").textContent="00:00";return}
-  $("#timer").textContent=fmtSec((Date.now()-state.runningStart)/1000);
-}
-function start(){
-  state.runningStart=Date.now();save();$("#mainBtn").classList.add("active");$("#mainBtn").textContent=tr("stop");$("#timerLabel").textContent=tr("running");tick();timerId=setInterval(tick,250);wake();try{navigator.vibrate?.(35)}catch(e){}
-}
-function stop(){
-  const end=Date.now(), start=state.runningStart;if(!start)return;
-  if(end-start<1000){return}
-  state.session.contractions.push({id:crypto.randomUUID?.()||String(Date.now()),start,end});
-  state.runningStart=null;clearInterval(timerId);timerId=null;releaseWake();save();
-  $("#mainBtn").classList.remove("active");$("#mainBtn").textContent=tr("start");$("#timerLabel").textContent=tr("ready");$("#timer").textContent="00:00";render();try{navigator.vibrate?.([35,30,35])}catch(e){}
-}
-function restoreRunning(){
-  if(state.runningStart){$("#mainBtn").classList.add("active");$("#mainBtn").textContent=tr("stop");$("#timerLabel").textContent=tr("running");tick();timerId=setInterval(tick,250);wake()}
-}
-function addEvent(type){
-  state.session.events.push({id:crypto.randomUUID?.()||String(Date.now()),type,ts:Date.now()});save();render();try{navigator.vibrate?.(50)}catch(e){}
-}
-function undo(){
-  if(!state.session.contractions.length)return;
-  state.session.contractions.pop();save();render();
-}
-function localInput(ts){const d=new Date(ts), p=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`}
 function openEdit(id){
-  const c=state.session.contractions.find(x=>x.id===id);if(!c)return;editId=id;$("#editStart").value=localInput(c.start);$("#editEnd").value=localInput(c.end);$("#editDialog").showModal();
+  const s=currentSession(),c=s.contractions.find(x=>x.id===id);if(!c)return;editingId=id;
+  $("#editStart").value=localInput(c.start);$("#editEnd").value=localInput(c.end);$("#editPain").value=c.painIntensity==null?"":String(c.painIntensity);$("#editNote").value=c.note||"";$("#editDialog").showModal()
 }
 function saveEdit(){
-  const c=state.session.contractions.find(x=>x.id===editId), s=new Date($("#editStart").value).getTime(), e=new Date($("#editEnd").value).getTime();
-  if(!c||!s||!e||e<=s){alert(tr("invalidEdit"));return false}
-  c.start=s;c.end=e;state.session.contractions.sort((a,b)=>a.start-b.start);save();render();return true
+  const s=currentSession(),c=s.contractions.find(x=>x.id===editingId);if(!c)return false;
+  const st=new Date($("#editStart").value).getTime(),en=new Date($("#editEnd").value).getTime();
+  if(!st||!en||en<=st){alert(t("invalidTimes"));return false}
+  c.start=st;c.end=en;c.note=$("#editNote").value.trim();const pv=$("#editPain").value;c.painIntensity=pv===""?null:Number(pv);c.painRatedAt=pv===""?null:(c.painRatedAt||Date.now());s.contractions.sort((a,b)=>a.start-b.start);save();renderAll();return true
 }
-function openSettings(){
-  Object.entries(state.settings).forEach(([k,v])=>{const el=$("#"+k);if(el)el.value=v});$("#settingsDialog").showModal()
+function summaryText(session=currentSession()){
+  const rows=withDerived(session),ints=rows.map(r=>r.interval).filter(x=>x!=null),ds=rows.map(r=>r.duration),last=rows.at(-1);
+  return [
+    t("summaryTitle"),
+    `${t("sessionStarted")}: ${dateTime(session.startedAt)}`,
+    `${t("recordedCount")}: ${rows.length}`,
+    `${t("latestRecorded")}: ${last?dateTime(last.start):t("notEnough")}`,
+    `${t("avgIntervalLabel")}: ${ints.length?fmtSec(mean(ints)):t("notEnough")}`,
+    `${t("avgDurationLabel")}: ${ds.length?fmtSec(mean(ds)):t("notEnough")}`,
+    `${t("rangeLabel")}: ${ints.length?`${fmtSec(Math.min(...ints))}–${fmtSec(Math.max(...ints))}`:t("notEnough")}`,
+    `${t("latestRestLabel")}: ${last?.rest!=null?fmtSec(last.rest):t("notEnough")}`,
+    "",
+    `${t("latestPain")}: ${last?.painIntensity!=null?`${last.painIntensity} / 10`:t("notRated")}`,
+    `${t("ratedContractions")}: ${rows.filter(r=>r.painIntensity!=null).length} / ${rows.length}`,
+    `${t("painRange")}: ${rows.some(r=>r.painIntensity!=null)?`${Math.min(...rows.filter(r=>r.painIntensity!=null).map(r=>r.painIntensity))}–${Math.max(...rows.filter(r=>r.painIntensity!=null).map(r=>r.painIntensity))} / 10`:t("notEnough")}`,
+    t("painNote"),
+    "",
+    t("disclaimer")
+  ].join("\n")
+}
+function renderSummary(){$("#summaryBox").textContent=summaryText()}
+async function copySummary(){await navigator.clipboard?.writeText(summaryText());toast(t("copied"))}
+async function shareSummary(){if(navigator.share){try{await navigator.share({title:t("summaryTitle"),text:summaryText()});return}catch(e){if(e.name==="AbortError")return}}await copySummary();toast(t("shareFailed"))}
+function download(name,text,type){const blob=new Blob([text],{type}),u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
+function exportCsv(){
+  const s=currentSession(),rows=withDerived(s),data=[["session_id","number","start_iso","end_iso","duration_sec","interval_start_to_start_sec","rest_sec","pain_intensity","pain_rated_at_iso","note"]];
+  rows.forEach(r=>data.push([s.id,r.number,new Date(r.start).toISOString(),new Date(r.end).toISOString(),r.duration,r.interval??"",r.rest??"",r.painIntensity??"",r.painRatedAt?new Date(r.painRatedAt).toISOString():"",r.note||""]));
+  download(`contrack_${new Date(s.startedAt).toISOString().slice(0,10)}.csv`,data.map(row=>row.map(v=>`"${String(v).replaceAll('"','""')}"`).join(",")).join("\n"),"text/csv;charset=utf-8")
+}
+function exportJson(all=false){const x=all?state:currentSession();download(all?"contrack_all_data.json":"contrack_session.json",JSON.stringify(x,null,2),"application/json")}
+function toast(msg){$("#undoMsg").textContent=msg;$("#undoBar").classList.add("show");clearTimeout(undoTimer);undoTimer=setTimeout(()=>$("#undoBar").classList.remove("show"),3500)}
+
+function renderSettings(){
+  applyDesign();
+  $("#language").value=state.language;$("#theme").value=state.settings.theme;$("#textSize").value=state.settings.textSize;
+  $("#maternityPhone").value=state.settings.maternityPhone;$("#emergencyPhone").value=state.settings.emergencyPhone;
+  $("#hapticsToggle").setAttribute("aria-pressed",state.settings.haptics);$("#rollingToggle").setAttribute("aria-pressed",state.settings.rollingAverage);$("#painChartToggle").setAttribute("aria-pressed",state.settings.showPainChart);$("#motionToggle").setAttribute("aria-pressed",state.settings.reduceMotion)
 }
 function saveSettings(){
-  state.settings.gestWeek=$("#gestWeek").value;
-  state.settings.intervalThreshold=Number($("#intervalThreshold").value||5);
-  state.settings.durationThreshold=Number($("#durationThreshold").value||60);
-  state.settings.persistenceThreshold=Number($("#persistenceThreshold").value||60);
-  state.settings.maternityPhone=$("#maternityPhone").value.trim();
-  state.settings.emergencyPhone=$("#emergencyPhone").value.trim();save();render();
+  state.language=$("#language").value;state.settings.theme=$("#theme").value;state.settings.textSize=$("#textSize").value;
+  state.settings.maternityPhone=$("#maternityPhone").value.trim();state.settings.emergencyPhone=$("#emergencyPhone").value.trim();save();applyTheme();applyLang();toast(t("settingsSaved"))
 }
-function callNumber(kind){
-  const n=kind==="hospital"?state.settings.maternityPhone:state.settings.emergencyPhone;
-  if(!n){alert(tr("noPhone"));openSettings();return}
-  location.href="tel:"+n.replace(/[^\d+]/g,"");
-}
+function toggleSetting(key,el){state.settings[key]=!state.settings[key];el.setAttribute("aria-pressed",state.settings[key]);save();applyTheme();renderChart()}
 function newSession(){
-  if(!confirm(tr("confirmNew")))return;
-  if(state.runningStart)stop();
-  state.session={id:Date.now(),startedAt:Date.now(),contractions:[],events:[]};save();render();
+  if(state.runningStart){alert(t("tapWhenEnds"));return}
+  if(!confirm(t("confirmNewSession")))return;
+  activeSession().endedAt=Date.now();const s={id:uid(),startedAt:Date.now(),endedAt:null,contractions:[]};state.sessions.push(s);state.selectedSessionId=s.id;save();renderAll()
 }
-function eraseAll(){
-  if(!confirm(tr("confirmErase")))return;
-  localStorage.removeItem(STORAGE);state=structuredClone(defaultState);location.reload();
+function deleteEntry(id){if(!confirm(t("confirmDeleteEntry")))return;const s=currentSession();s.contractions=s.contractions.filter(c=>c.id!==id);save();renderAll()}
+function deleteSelectedSession(){
+  if(!confirm(t("confirmDeleteSession")))return;const id=currentSession().id;
+  if(state.sessions.length===1){state.sessions=[{id:uid(),startedAt:Date.now(),endedAt:null,contractions:[]}]} else state.sessions=state.sessions.filter(s=>s.id!==id);
+  state.selectedSessionId=state.sessions.at(-1).id;save();renderAll()
 }
-function exportCSV(){
-  const rows=[["session_id","start_iso","end_iso","duration_sec","interval_start_to_start_sec"]];
-  const cs=state.session.contractions;
-  cs.forEach((c,i)=>rows.push([state.session.id,new Date(c.start).toISOString(),new Date(c.end).toISOString(),duration(c),i?(c.start-cs[i-1].start)/1000:""]));
-  const csv=rows.map(r=>r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(",")).join("\n");
-  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=`wehentracker_${new Date().toISOString().slice(0,10)}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+function deleteAll(){
+  if(!confirm(t("confirmDeleteAll")))return;localStorage.removeItem(KEY);localStorage.removeItem(V1KEY);state=baseState();state.selectedSessionId=state.sessions[0].id;save();applyLang()
 }
-$("#mainBtn").onclick=()=>state.runningStart?stop():start();
-$$(".quick").forEach(b=>b.onclick=()=>addEvent(b.dataset.event));
-$("#undoBtn").onclick=undo;$("#editBtn").onclick=()=>{const c=state.session.contractions.at(-1);if(c)openEdit(c.id)};
-$("#newSessionBtn").onclick=newSession;$("#exportBtn").onclick=exportCSV;
-$("#settingsBtn").onclick=openSettings;$("#saveSettings").onclick=saveSettings;$("#eraseAll").onclick=eraseAll;
-$("#saveEdit").onclick=e=>{if(!saveEdit()){e.preventDefault()}};
-$("#lang").onchange=e=>{state.language=e.target.value;save();applyLanguage()};
-$("#hospitalCallBtn").onclick=()=>callNumber("hospital");$("#emergencyCallBtn").onclick=()=>callNumber("emergency");
-window.addEventListener("resize",()=>requestAnimationFrame(drawAll));
-window.addEventListener("online",()=>$("#offlineBadge").classList.remove("show"));
-window.addEventListener("offline",()=>$("#offlineBadge").classList.add("show"));
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&state.runningStart)wake()});
-if(!navigator.onLine)$("#offlineBadge").classList.add("show");
-applyLanguage();restoreRunning();
-if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("./service-worker.js").catch(()=>{});
+function call(which){
+  const n=which==="maternity"?state.settings.maternityPhone:state.settings.emergencyPhone;
+  if(!n){alert(t("phoneMissing"));switchView("settings");$("#helpDialog").close();return}
+  location.href="tel:"+n.replace(/[^\d+]/g,"")
+}
+function switchView(v){
+  state.activeView=v;save();$$(".view").forEach(x=>x.hidden=x.id!==`view-${v}`);$$(".nav button").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.view===v)));
+  if(v==="history")renderHistory();if(v==="summary")renderSummary();if(v==="settings")renderSettings()
+}
+function renderAll(){
+  applyTheme();renderPrimary();renderSnapshot();renderChart();renderHistory();renderSummary();renderSettings();switchView(state.activeView||"track");showUndo()
+}
+
+$$(".nav button").forEach(b=>b.onclick=()=>switchView(b.dataset.view));
+$("#timerBtn").onclick=()=>state.runningStart?endTimer():startTimer();
+$("#undoBtn").onclick=undoLast;$("#quickEditBtn").onclick=()=>{const u=state.undo;if(u){state.selectedSessionId=u.sessionId;openEdit(u.contraction.id)}};
+$("#painLaterBtn").onclick=()=>$("#painCapture").classList.remove("show");
+$("#latestPainEdit").onclick=e=>{const id=e.currentTarget.dataset.id;if(id){state.selectedSessionId=activeSession().id;openEdit(id)}};
+
+$("#helpBtn").onclick=()=>$("#helpDialog").showModal();$("#closeHelpBtn").onclick=()=>$("#helpDialog").close();$("#callMaternityBtn").onclick=()=>call("maternity");$("#callEmergencyBtn").onclick=()=>call("emergency");
+$("#sessionSelect").onchange=e=>{state.selectedSessionId=e.target.value;save();renderHistory();renderSummary()};
+$("#newSessionBtn").onclick=newSession;
+$("#saveEditBtn").onclick=e=>{if(!saveEdit())e.preventDefault()};
+$("#copySummaryBtn").onclick=copySummary;$("#shareSummaryBtn").onclick=shareSummary;$("#exportCsvBtn").onclick=exportCsv;$("#exportJsonBtn").onclick=()=>exportJson(false);
+$("#saveSettingsBtn").onclick=saveSettings;$("#exportAllBtn").onclick=()=>exportJson(true);$("#deleteSessionBtn").onclick=deleteSelectedSession;$("#deleteAllBtn").onclick=deleteAll;
+$("#hapticsToggle").onclick=e=>toggleSetting("haptics",e.currentTarget);$("#rollingToggle").onclick=e=>toggleSetting("rollingAverage",e.currentTarget);$("#painChartToggle").onclick=e=>toggleSetting("showPainChart",e.currentTarget);$("#motionToggle").onclick=e=>toggleSetting("reduceMotion",e.currentTarget);
+$$(".preset-card").forEach(b=>b.onclick=()=>{
+  state.settings.design=b.dataset.preset;
+  save();
+  applyDesign();
+  applyTheme();
+  renderChart();
+});
+$("#language").onchange=e=>{state.language=e.target.value;save();applyLang()};
+$("#quickLanguage").onchange=e=>{state.language=e.target.value;save();applyLang()};
+$("#theme").onchange=e=>{state.settings.theme=e.target.value;save();applyTheme()};$("#textSize").onchange=e=>{state.settings.textSize=e.target.value;save();applyTheme()};
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&state.runningStart)lockScreen()});
+matchMedia("(prefers-color-scheme: light)").addEventListener?.("change",()=>{if(state.settings.theme==="auto")applyTheme()});
+if("serviceWorker" in navigator && location.protocol.startsWith("http"))navigator.serviceWorker.register("./service-worker.js").catch(()=>{});
+applyDesign();
+applyLang();
+if(state.runningStart){timerId=setInterval(timerTick,250);lockScreen()}
 })();
 </script>
 </body>
