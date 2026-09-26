@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#111827">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Wehentracker">
+  <meta name="description" content="Offline-fähiger Wehentracker mit Dauer, Intervall, Trend, Safety-Hinweisen und vier Sprachen.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <title>Wehentracker V1</title>
+  <style>
+    :root{
+      color-scheme:dark;
+      --bg:#070b12;--card:#111827;--card2:#182233;--line:#2a3850;
+      --text:#f8fafc;--muted:#9fb0c7;--accent:#5eead4;--accent2:#38bdf8;
+      --warn:#fbbf24;--danger:#fb7185;--ok:#86efac;--shadow:0 14px 40px rgba(0,0,0,.28);
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,"Noto Sans SC","Noto Sans Devanagari",Arial,sans-serif}
+    body{min-height:100dvh}
+    button,input,select{font:inherit}
+    button{border:0;color:inherit}
+    .app{width:min(100%,520px);margin:auto;min-height:100dvh;padding:calc(env(safe-area-inset-top) + 12px) 14px calc(env(safe-area-inset-bottom) + 28px)}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+    .brand{display:flex;align-items:center;gap:10px}
+    .logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(145deg,var(--accent),var(--accent2));display:grid;place-items:center;color:#05131a;font-weight:900}
+    h1{font-size:19px;margin:0;letter-spacing:.2px}.sub{font-size:11px;color:var(--muted);margin-top:2px}
+    .top-actions{display:flex;gap:7px}.icon-btn,.lang{background:var(--card);border:1px solid var(--line);border-radius:12px;min-height:40px;padding:0 11px}
+    .lang{font-weight:800}
+    .card{background:linear-gradient(180deg,var(--card),#0f1726);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:var(--shadow);margin:10px 0}
+    .status-card{border-left:5px solid var(--accent)}
+    .status-card.warn{border-left-color:var(--warn)} .status-card.danger{border-left-color:var(--danger)}
+    .status-card.ok{border-left-color:var(--ok)}
+    .eyebrow{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:800}
+    .status-title{font-size:20px;font-weight:900;margin:5px 0 3px}.status-copy{color:var(--muted);font-size:13px;line-height:1.35}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+    .stat{background:var(--card2);border:1px solid var(--line);padding:9px;border-radius:13px;min-width:0}
+    .stat .k{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.stat .v{font-size:18px;font-weight:900;margin-top:3px}
+    .tracker{display:grid;place-items:center;padding:13px 0 7px}
+    .timer{font-variant-numeric:tabular-nums;font-size:44px;font-weight:950;letter-spacing:-1.5px;min-height:54px}
+    .timer-label{color:var(--muted);font-size:12px;margin-bottom:10px}
+    .main-btn{width:min(72vw,310px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 28%,#70f4dc,#24c6ad 56%,#159381);color:#04110e;font-size:24px;font-weight:950;box-shadow:0 0 0 9px rgba(94,234,212,.09),0 20px 50px rgba(45,212,191,.22);transition:.15s transform,.2s background}
+    .main-btn:active{transform:scale(.975)}
+    .main-btn.active{background:radial-gradient(circle at 35% 28%,#ff9bad,#fb7185 58%,#d43f59);color:#25050b;box-shadow:0 0 0 9px rgba(251,113,133,.09),0 20px 50px rgba(251,113,133,.22)}
+    .quick-row{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:14px}
+    .quick{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 5px;font-size:11px;min-height:54px}
+    .quick span{display:block;font-size:17px;margin-bottom:3px}
+    .actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:10px}
+    .secondary{background:var(--card2);border:1px solid var(--line);border-radius:12px;min-height:42px;font-size:12px;font-weight:700}
+    .secondary:disabled{opacity:.35}
+    .section-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:7px}
+    .section-title{font-size:14px;font-weight:900}.section-note{font-size:10px;color:var(--muted)}
+    canvas{display:block;width:100%;height:150px;background:#0b1320;border-radius:12px;border:1px solid var(--line)}
+    .legend{display:flex;gap:13px;color:var(--muted);font-size:10px;margin-top:7px}.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
+    .history{display:grid;gap:6px;margin-top:8px}.row{display:grid;grid-template-columns:56px 1fr 1fr 34px;gap:6px;align-items:center;padding:8px 9px;background:var(--card2);border-radius:11px;font-size:12px}
+    .row b{font-variant-numeric:tabular-nums}.row .muted{color:var(--muted)}.edit-mini{background:transparent;color:var(--accent2);font-weight:800;padding:4px}
+    .notice{font-size:11px;line-height:1.45;color:var(--muted);padding:0 3px}.notice strong{color:var(--text)}
+    .contact-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+    .contact-btn{border-radius:12px;min-height:44px;font-weight:850;background:var(--accent2);color:#03151d}
+    .contact-btn.emergency{background:var(--danger);color:#23030a}
+    dialog{width:min(calc(100% - 24px),480px);max-height:88dvh;background:#0d1624;color:var(--text);border:1px solid var(--line);border-radius:20px;padding:0;box-shadow:0 30px 80px rgba(0,0,0,.55)}
+    dialog::backdrop{background:rgba(0,0,0,.7);backdrop-filter:blur(4px)}
+    .modal{padding:16px}.modal h2{margin:0 0 12px;font-size:19px}.modal p,.modal li{font-size:13px;line-height:1.45;color:var(--muted)}
+    .field{display:grid;gap:5px;margin:11px 0}.field label{font-size:11px;font-weight:800;color:var(--muted)}.field input,.field select{width:100%;background:var(--card2);color:var(--text);border:1px solid var(--line);border-radius:11px;padding:11px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+    .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:15px}.modal-actions button{padding:10px 14px;border-radius:11px;background:var(--card2);border:1px solid var(--line)}.modal-actions .primary{background:var(--accent);color:#03201b;border-color:transparent;font-weight:900}
+    .danger-zone{border-top:1px solid var(--line);margin-top:16px;padding-top:13px}.danger-zone button{background:#35131a;color:#ffb6c1}
+    .source{font-size:11px;color:var(--muted);padding:8px 0}.source a{color:var(--accent2)}
+    .pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 8px;background:var(--card2);border:1px solid var(--line);font-size:10px;color:var(--muted)}
+    .offline{position:fixed;z-index:9;left:50%;bottom:calc(env(safe-area-inset-bottom) + 10px);transform:translateX(-50%);background:#1f2937;border:1px solid var(--line);padding:7px 10px;border-radius:999px;font-size:10px;display:none}
+    .offline.show{display:block}
+    @media (min-width:700px){body{background:radial-gradient(circle at top,#122035,var(--bg) 45%)}.app{padding-left:20px;padding-right:20px}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo">W</div>
+      <div><h1 data-i18n="appName">Wehentracker</h1><div class="sub">V1 · local & offline</div></div>
+    </div>
+    <div class="top-actions">
+      <select id="lang" class="lang" aria-label="Language">
+        <option value="de">DE</option><option value="en">EN</option><option value="zh">中文</option><option value="hi">हिन्दी</option>
+      </select>
+      <button class="icon-btn" id="settingsBtn" aria-label="Settings">⚙︎</button>
+    </div>
+  </header>
+
+  <section class="card status-card" id="statusCard">
+    <div class="eyebrow" data-i18n="pattern">Gemessenes Muster</div>
+    <div class="status-title" id="statusTitle">Noch keine Daten</div>
+    <div class="status-copy" id="statusCopy">Starte die erste Wehe, sobald sie beginnt.</div>
+    <div class="stats">
+      <div class="stat"><div class="k" data-i18n="lastDuration">Letzte Dauer</div><div class="v" id="lastDuration">—</div></div>
+      <div class="stat"><div class="k" data-i18n="lastInterval">Letzter Abstand</div><div class="v" id="lastInterval">—</div></div>
+      <div class="stat"><div class="k" data-i18n="avg5">Ø letzte 5</div><div class="v" id="avgInterval">—</div></div>
+    </div>
+    <div class="contact-buttons" id="contactButtons" hidden>
+      <button class="contact-btn" id="hospitalCallBtn" data-i18n="callMaternity">Geburtsstation anrufen</button>
+      <button class="contact-btn emergency" id="emergencyCallBtn" data-i18n="callEmergency">Notruf</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="tracker">
+      <div class="timer" id="timer">00:00</div>
+      <div class="timer-label" id="timerLabel" data-i18n="ready">Bereit</div>
+      <button class="main-btn" id="mainBtn" data-i18n="start">WEHE STARTEN</button>
+    </div>
+
+    <div class="quick-row">
+      <button class="quick" data-event="water"><span>💧</span><b data-i18n="water">Fruchtwasser</b></button>
+      <button class="quick" data-event="bleeding"><span>●</span><b data-i18n="bleeding">Blutung</b></button>
+      <button class="quick" data-event="movement"><span>↘</span><b data-i18n="movement">Bewegung ↓</b></button>
+      <button class="quick" data-event="push"><span>!</span><b data-i18n="pushUrge">Pressdrang</b></button>
+    </div>
+
+    <div class="actions">
+      <button class="secondary" id="undoBtn" data-i18n="undo">↶ Letzte löschen</button>
+      <button class="secondary" id="editBtn" data-i18n="editLast">Letzte bearbeiten</button>
+      <button class="secondary" id="newSessionBtn" data-i18n="newSession">Neue Session</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="section-head"><div><div class="section-title" data-i18n="intervalChart">Wehenabstand</div><div class="section-note" data-i18n="intervalStart">Start → Start · Minuten</div></div><span class="pill" id="regularityPill">—</span></div>
+    <canvas id="intervalCanvas"></canvas>
+    <div class="legend"><span><i class="dot" style="background:#38bdf8"></i><span data-i18n="interval">Abstand</span></span><span><i class="dot" style="background:#fbbf24"></i><span data-i18n="configuredThreshold">Konfigurierte Schwelle</span></span></div>
+  </section>
+
+  <section class="card">
+    <div class="section-head"><div><div class="section-title" data-i18n="durationChart">Wehendauer</div><div class="section-note" data-i18n="seconds">Sekunden</div></div><span class="pill" id="countPill">0</span></div>
+    <canvas id="durationCanvas"></canvas>
+    <div class="legend"><span><i class="dot" style="background:#5eead4"></i><span data-i18n="duration">Dauer</span></span><span><i class="dot" style="background:#fbbf24"></i><span data-i18n="customPlan">Individueller Plan</span></span></div>
+  </section>
+
+  <section class="card">
+    <div class="section-head"><div class="section-title" data-i18n="recent">Letzte Wehen</div><button class="secondary" id="exportBtn" style="min-height:34px;padding:0 10px" data-i18n="export">Export CSV</button></div>
+    <div class="history" id="history"></div>
+  </section>
+
+  <div class="notice">
+    <strong data-i18n="important">Wichtig:</strong>
+    <span data-i18n="disclaimer">Diese App misst Zeiten und zeigt Muster. Sie kann weder Muttermundöffnung noch Geburtsphase diagnostizieren und ersetzt keine Hebamme, Ärztin/Arzt oder Geburtsstation. Bei Unsicherheit immer die Geburtsstation kontaktieren.</span>
+  </div>
+
+  <section class="card">
+    <div class="section-title" data-i18n="safetyBasis">Safety-Basis in V1</div>
+    <div class="source" data-i18n="safetyText">Dringender Kontakt bei Fruchtwasserabgang, vaginaler Blutung, deutlich weniger Kindsbewegungen, vermuteten Wehen vor 37 SSW, Wehen über 2 Minuten oder ≥6 Wehen in 10 Minuten. Bei starkem Pressdrang und unmittelbar erwarteter Geburt: lokaler Notruf.</div>
+    <div class="source">
+      NHS: <a href="https://www.nhs.uk/pregnancy/labour-and-birth/signs-that-labour-has-begun/" target="_blank" rel="noopener">Signs that labour has begun</a><br>
+      March of Dimes: <a href="https://www2.marchofdimes.org/find-support/topics/birth/contractions-and-signs-labor" target="_blank" rel="noopener">Contractions and signs of labor</a>
+    </div>
+  </section>
+</div>
+
+<div class="offline" id="offlineBadge">Offline</div>
+
+<dialog id="settingsDialog"><form method="dialog" class="modal" id="settingsForm">
+  <h2 data-i18n="settings">Einstellungen</h2>
+  <div class="grid2">
+    <div class="field"><label data-i18n="gestWeek">Schwangerschaftswoche</label><input id="gestWeek" type="number" min="20" max="43" step="0.1" placeholder="z. B. 39.2"></div>
+    <div class="field"><label data-i18n="intervalThreshold">Kontakt-Abstand (min)</label><input id="intervalThreshold" type="number" min="2" max="15" step="0.5"></div>
+  </div>
+  <div class="grid2">
+    <div class="field"><label data-i18n="durationThreshold">Plan-Dauer (sec)</label><input id="durationThreshold" type="number" min="20" max="120" step="5"></div>
+    <div class="field"><label data-i18n="persistenceThreshold">Plan-Zeitraum (min)</label><input id="persistenceThreshold" type="number" min="15" max="180" step="5"></div>
+  </div>
+  <div class="field"><label data-i18n="maternityPhone">Telefon Geburtsstation</label><input id="maternityPhone" type="tel" inputmode="tel" placeholder="+86 …"></div>
+  <div class="field"><label data-i18n="emergencyPhone">Lokale Notrufnummer</label><input id="emergencyPhone" type="tel" inputmode="tel" placeholder="z. B. 120"></div>
+  <p data-i18n="ruleNote">Die 5/1/1-Werte sind nur ein konfigurierbarer persönlicher Plan. Die App verzögert bei regelmäßigen Wehen im eingestellten Kontakt-Abstand keine Kontakt-Empfehlung.</p>
+  <div class="modal-actions"><button value="cancel" data-i18n="cancel">Abbrechen</button><button class="primary" value="default" id="saveSettings" data-i18n="save">Speichern</button></div>
+  <div class="danger-zone"><button type="button" id="eraseAll" data-i18n="eraseAll">Alle lokalen Daten löschen</button></div>
+</form></dialog>
+
+<dialog id="editDialog"><form method="dialog" class="modal">
+  <h2 data-i18n="editContraction">Wehe bearbeiten</h2>
+  <div class="field"><label data-i18n="startTime">Start</label><input id="editStart" type="datetime-local" step="1"></div>
+  <div class="field"><label data-i18n="endTime">Ende</label><input id="editEnd" type="datetime-local" step="1"></div>
+  <div class="modal-actions"><button value="cancel" data-i18n="cancel">Abbrechen</button><button class="primary" value="default" id="saveEdit" data-i18n="save">Speichern</button></div>
+</form></dialog>
+
+<script>
+(()=>{"use strict";
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const STORAGE="wehentracker_v1_state";
+const defaultState={
+  language:"de", runningStart:null,
+  session:{id:Date.now(),startedAt:Date.now(),contractions:[],events:[]},
+  settings:{gestWeek:"",intervalThreshold:5,durationThreshold:60,persistenceThreshold:60,maternityPhone:"",emergencyPhone:""}
+};
+let state=load(), timerId=null, wakeLock=null, editId=null;
+
+const T={
+de:{
+ appName:"Wehentracker",pattern:"Gemessenes Muster",lastDuration:"Letzte Dauer",lastInterval:"Letzter Abstand",avg5:"Ø letzte 5",
+ ready:"Bereit",start:"WEHE STARTEN",stop:"WEHE BEENDEN",water:"Fruchtwasser",bleeding:"Blutung",movement:"Bewegung ↓",pushUrge:"Pressdrang",
+ undo:"↶ Letzte löschen",editLast:"Letzte bearbeiten",newSession:"Neue Session",intervalChart:"Wehenabstand",intervalStart:"Start → Start · Minuten",
+ interval:"Abstand",configuredThreshold:"Konfigurierte Schwelle",durationChart:"Wehendauer",seconds:"Sekunden",duration:"Dauer",customPlan:"Individueller Plan",
+ recent:"Letzte Wehen",export:"Export CSV",important:"Wichtig:",disclaimer:"Diese App misst Zeiten und zeigt Muster. Sie kann weder Muttermundöffnung noch Geburtsphase diagnostizieren und ersetzt keine Hebamme, Ärztin/Arzt oder Geburtsstation. Bei Unsicherheit immer die Geburtsstation kontaktieren.",
+ safetyBasis:"Safety-Basis in V1",safetyText:"Dringender Kontakt bei Fruchtwasserabgang, vaginaler Blutung, deutlich weniger Kindsbewegungen, vermuteten Wehen vor 37 SSW, Wehen über 2 Minuten oder ≥6 Wehen in 10 Minuten. Bei starkem Pressdrang und unmittelbar erwarteter Geburt: lokaler Notruf.",
+ settings:"Einstellungen",gestWeek:"Schwangerschaftswoche",intervalThreshold:"Kontakt-Abstand (min)",durationThreshold:"Plan-Dauer (sec)",persistenceThreshold:"Plan-Zeitraum (min)",
+ maternityPhone:"Telefon Geburtsstation",emergencyPhone:"Lokale Notrufnummer",ruleNote:"Die 5/1/1-Werte sind nur ein konfigurierbarer persönlicher Plan. Die App verzögert bei regelmäßigen Wehen im eingestellten Kontakt-Abstand keine Kontakt-Empfehlung.",
+ cancel:"Abbrechen",save:"Speichern",eraseAll:"Alle lokalen Daten löschen",editContraction:"Wehe bearbeiten",startTime:"Start",endTime:"Ende",callMaternity:"Geburtsstation anrufen",callEmergency:"Notruf",
+ noData:"Noch keine Daten",noDataCopy:"Starte die erste Wehe, sobald sie beginnt.",oneRecorded:"Erste Wehe erfasst",oneCopy:"Für einen Abstand werden mindestens zwei Wehen benötigt.",
+ observe:"Beobachten",observeCopy:"Noch kein regelmäßiges häufiges Muster erkannt. Verlauf weiter erfassen und bei Unsicherheit die Geburtsstation kontaktieren.",
+ increasing:"Regelmäßiger werdend",increasingCopy:"Das Muster wird regelmäßiger oder die Abstände werden kürzer. Vorbereitung und individuellen Geburtsplan beachten.",
+ contact:"Geburtsstation kontaktieren",contactCopy:"Regelmäßige Wehen liegen ungefähr im eingestellten Kontakt-Abstand. Geburtsstation/Hebamme jetzt kontaktieren.",
+ urgent:"Dringend Kontakt aufnehmen",urgentCopy:"Ein Safety-Kriterium ist aktiv. Nicht auf weitere Tracker-Werte warten; Geburtsstation/Hebamme jetzt kontaktieren.",
+ emergency:"Notfall",emergencyCopy:"Starker Pressdrang / unmittelbar erwartete Geburt wurde markiert. Lokalen Rettungsdienst kontaktieren.",
+ preterm:"Unter 37 SSW + Wehenzeichen",longContraction:"Wehe länger als 2 Minuten",sixInTen:"≥6 Wehen in 10 Minuten",waterReason:"Fruchtwasserabgang",bleedingReason:"Vaginale Blutung",movementReason:"Deutlich weniger Kindsbewegungen",
+ running:"Wehe läuft",regularity:"Regelmäßigkeit",high:"hoch",medium:"mittel",low:"niedrig",count:"Wehen",confirmNew:"Neue Session starten? Die aktuelle Session bleibt lokal gespeichert, wird aber nicht weiter angezeigt.",confirmErase:"Wirklich alle lokalen Wehen- und Einstellungsdaten löschen?",invalidEdit:"Ende muss nach dem Start liegen.",noPhone:"Bitte Telefonnummer in Einstellungen hinterlegen.",eventSaved:"Ereignis gespeichert",offline:"Offline"
+},
+en:{
+ appName:"Contraction Tracker",pattern:"Observed pattern",lastDuration:"Last duration",lastInterval:"Last interval",avg5:"Avg last 5",
+ ready:"Ready",start:"START CONTRACTION",stop:"END CONTRACTION",water:"Waters",bleeding:"Bleeding",movement:"Movement ↓",pushUrge:"Urge to push",
+ undo:"↶ Delete last",editLast:"Edit last",newSession:"New session",intervalChart:"Contraction interval",intervalStart:"Start → start · minutes",
+ interval:"Interval",configuredThreshold:"Configured threshold",durationChart:"Contraction duration",seconds:"Seconds",duration:"Duration",customPlan:"Personal plan",
+ recent:"Recent contractions",export:"Export CSV",important:"Important:",disclaimer:"This app records timing and shows patterns. It cannot diagnose cervical dilation or labour stage and does not replace a midwife, clinician or maternity unit. If unsure, contact your maternity unit.",
+ safetyBasis:"V1 safety basis",safetyText:"Urgent contact for waters breaking, vaginal bleeding, clearly reduced fetal movement, suspected labour before 37 weeks, contractions lasting over 2 minutes, or ≥6 contractions in 10 minutes. With a strong urge to push and birth seeming imminent: call local emergency services.",
+ settings:"Settings",gestWeek:"Gestational week",intervalThreshold:"Contact interval (min)",durationThreshold:"Plan duration (sec)",persistenceThreshold:"Plan period (min)",
+ maternityPhone:"Maternity unit phone",emergencyPhone:"Local emergency number",ruleNote:"The 5/1/1 values are only a configurable personal plan. The app does not delay its contact recommendation when regular contractions reach the configured contact interval.",
+ cancel:"Cancel",save:"Save",eraseAll:"Erase all local data",editContraction:"Edit contraction",startTime:"Start",endTime:"End",callMaternity:"Call maternity unit",callEmergency:"Emergency call",
+ noData:"No data yet",noDataCopy:"Start the first contraction when it begins.",oneRecorded:"First contraction recorded",oneCopy:"At least two contractions are needed to calculate an interval.",
+ observe:"Observe",observeCopy:"No regular frequent pattern detected yet. Keep recording and contact your maternity unit whenever you are unsure.",
+ increasing:"Becoming more regular",increasingCopy:"The pattern is becoming more regular or intervals are shortening. Prepare and follow your individual birth plan.",
+ contact:"Contact maternity unit",contactCopy:"Regular contractions are approximately at the configured contact interval. Contact your maternity unit/midwife now.",
+ urgent:"Urgent contact",urgentCopy:"A safety criterion is active. Do not wait for more tracker data; contact your maternity unit/midwife now.",
+ emergency:"Emergency",emergencyCopy:"A strong urge to push / imminent birth was marked. Contact local emergency services.",
+ preterm:"Under 37 weeks + labour signs",longContraction:"Contraction longer than 2 minutes",sixInTen:"≥6 contractions in 10 minutes",waterReason:"Waters broken",bleedingReason:"Vaginal bleeding",movementReason:"Clearly reduced fetal movement",
+ running:"Contraction running",regularity:"Regularity",high:"high",medium:"medium",low:"low",count:"Contractions",confirmNew:"Start a new session? The current session remains stored locally but will no longer be shown.",confirmErase:"Really erase all local contraction and settings data?",invalidEdit:"End must be after start.",noPhone:"Please add a phone number in Settings.",eventSaved:"Event saved",offline:"Offline"
+},
+zh:{
+ appName:"宫缩记录器",pattern:"记录到的宫缩模式",lastDuration:"最近持续时间",lastInterval:"最近间隔",avg5:"最近5次平均",
+ ready:"就绪",start:"开始宫缩",stop:"结束宫缩",water:"破水",bleeding:"出血",movement:"胎动减少",pushUrge:"强烈便意/用力感",
+ undo:"↶ 删除最近一次",editLast:"编辑最近一次",newSession:"新记录",intervalChart:"宫缩间隔",intervalStart:"开始 → 开始 · 分钟",
+ interval:"间隔",configuredThreshold:"设定阈值",durationChart:"宫缩持续时间",seconds:"秒",duration:"持续时间",customPlan:"个人方案",
+ recent:"最近宫缩",export:"导出 CSV",important:"重要：",disclaimer:"本应用只记录时间并显示趋势，不能判断宫口扩张或分娩阶段，也不能替代助产士、医生或产科。若不确定，请联系产科。",
+ safetyBasis:"V1 安全规则",safetyText:"如破水、阴道出血、胎动明显减少、孕周不足37周且疑似临产、单次宫缩超过2分钟，或10分钟内≥6次宫缩，应立即联系产科。若有强烈用力感且感觉宝宝即将出生，请拨打当地急救电话。",
+ settings:"设置",gestWeek:"孕周",intervalThreshold:"联系产科间隔（分钟）",durationThreshold:"方案持续时间（秒）",persistenceThreshold:"方案持续周期（分钟）",
+ maternityPhone:"产科电话",emergencyPhone:"当地急救电话",ruleNote:"5/1/1 仅作为可配置的个人方案。当规律宫缩达到设定的联系间隔时，本应用不会因为“尚未满1小时”而延迟联系建议。",
+ cancel:"取消",save:"保存",eraseAll:"删除全部本地数据",editContraction:"编辑宫缩",startTime:"开始",endTime:"结束",callMaternity:"呼叫产科",callEmergency:"拨打急救电话",
+ noData:"暂无数据",noDataCopy:"宫缩开始时点击开始。",oneRecorded:"已记录第一次宫缩",oneCopy:"至少需要两次宫缩才能计算间隔。",
+ observe:"继续观察",observeCopy:"尚未发现规律且频繁的模式。继续记录；如有任何疑问，请联系产科。",
+ increasing:"逐渐规律",increasingCopy:"宫缩正在变得更规律或间隔缩短。请做好准备并遵循个人分娩计划。",
+ contact:"联系产科",contactCopy:"规律宫缩大致达到设定的联系间隔。现在联系产科/助产士。",
+ urgent:"立即联系产科",urgentCopy:"出现安全警示条件。不要等待更多记录，请立即联系产科/助产士。",
+ emergency:"紧急情况",emergencyCopy:"已记录强烈用力感/可能即将分娩。请联系当地急救服务。",
+ preterm:"不足37周 + 临产迹象",longContraction:"宫缩超过2分钟",sixInTen:"10分钟内≥6次宫缩",waterReason:"破水",bleedingReason:"阴道出血",movementReason:"胎动明显减少",
+ running:"宫缩进行中",regularity:"规律性",high:"高",medium:"中",low:"低",count:"宫缩次数",confirmNew:"开始新的记录吗？当前记录仍保存在本机，但将不再显示。",confirmErase:"确定删除所有本地宫缩与设置数据吗？",invalidEdit:"结束时间必须晚于开始时间。",noPhone:"请先在设置中填写电话号码。",eventSaved:"事件已记录",offline:"离线"
+},
+hi:{
+ appName:"कॉन्ट्रैक्शन ट्रैकर",pattern:"रिकॉर्ड किया गया पैटर्न",lastDuration:"पिछली अवधि",lastInterval:"पिछला अंतराल",avg5:"पिछले 5 का औसत",
+ ready:"तैयार",start:"कॉन्ट्रैक्शन शुरू",stop:"कॉन्ट्रैक्शन समाप्त",water:"पानी टूटना",bleeding:"रक्तस्राव",movement:"हलचल ↓",pushUrge:"ज़ोर लगाने की इच्छा",
+ undo:"↶ पिछला हटाएँ",editLast:"पिछला संपादित करें",newSession:"नया सत्र",intervalChart:"कॉन्ट्रैक्शन अंतराल",intervalStart:"शुरू → शुरू · मिनट",
+ interval:"अंतराल",configuredThreshold:"सेट सीमा",durationChart:"कॉन्ट्रैक्शन अवधि",seconds:"सेकंड",duration:"अवधि",customPlan:"व्यक्तिगत योजना",
+ recent:"हाल के कॉन्ट्रैक्शन",export:"CSV निर्यात",important:"महत्वपूर्ण:",disclaimer:"यह ऐप केवल समय रिकॉर्ड करता है और पैटर्न दिखाता है। यह सर्विक्स के खुलने या प्रसव के चरण का निदान नहीं कर सकता और दाई, डॉक्टर या प्रसूति इकाई का विकल्प नहीं है। संदेह होने पर प्रसूति इकाई से संपर्क करें।",
+ safetyBasis:"V1 सुरक्षा आधार",safetyText:"पानी टूटने, योनि से रक्तस्राव, बच्चे की हलचल स्पष्ट रूप से कम होने, 37 सप्ताह से पहले प्रसव के संकेत, 2 मिनट से अधिक चलने वाले कॉन्ट्रैक्शन, या 10 मिनट में ≥6 कॉन्ट्रैक्शन होने पर तुरंत संपर्क करें। बहुत तेज़ ज़ोर लगाने की इच्छा और जन्म निकट लगे तो स्थानीय आपात सेवा को कॉल करें।",
+ settings:"सेटिंग्स",gestWeek:"गर्भावस्था सप्ताह",intervalThreshold:"संपर्क अंतराल (मिनट)",durationThreshold:"योजना अवधि (सेकंड)",persistenceThreshold:"योजना समय (मिनट)",
+ maternityPhone:"प्रसूति इकाई फोन",emergencyPhone:"स्थानीय आपात नंबर",ruleNote:"5/1/1 मान केवल कॉन्फ़िगर करने योग्य व्यक्तिगत योजना हैं। नियमित कॉन्ट्रैक्शन सेट संपर्क अंतराल तक पहुँचने पर ऐप संपर्क की सलाह को 1 घंटे तक प्रतीक्षा नहीं कराता।",
+ cancel:"रद्द करें",save:"सहेजें",eraseAll:"सारा स्थानीय डेटा मिटाएँ",editContraction:"कॉन्ट्रैक्शन संपादित करें",startTime:"शुरू",endTime:"समाप्त",callMaternity:"प्रसूति इकाई को कॉल",callEmergency:"आपात कॉल",
+ noData:"अभी डेटा नहीं",noDataCopy:"कॉन्ट्रैक्शन शुरू होते ही पहला रिकॉर्ड शुरू करें।",oneRecorded:"पहला कॉन्ट्रैक्शन रिकॉर्ड हुआ",oneCopy:"अंतराल के लिए कम से कम दो कॉन्ट्रैक्शन चाहिए।",
+ observe:"निगरानी रखें",observeCopy:"अभी नियमित और बार-बार आने वाला पैटर्न नहीं दिखा। रिकॉर्ड करते रहें और संदेह होने पर प्रसूति इकाई से संपर्क करें।",
+ increasing:"अधिक नियमित हो रहा है",increasingCopy:"पैटर्न अधिक नियमित हो रहा है या अंतराल कम हो रहे हैं। तैयारी करें और अपनी व्यक्तिगत जन्म योजना का पालन करें।",
+ contact:"प्रसूति इकाई से संपर्क करें",contactCopy:"नियमित कॉन्ट्रैक्शन लगभग सेट संपर्क अंतराल पर हैं। अभी प्रसूति इकाई/दाई से संपर्क करें।",
+ urgent:"तुरंत संपर्क करें",urgentCopy:"सुरक्षा चेतावनी सक्रिय है। और डेटा की प्रतीक्षा न करें; अभी प्रसूति इकाई/दाई से संपर्क करें।",
+ emergency:"आपात स्थिति",emergencyCopy:"तेज़ ज़ोर लगाने की इच्छा / जन्म निकट होने का संकेत दर्ज हुआ। स्थानीय आपात सेवा से संपर्क करें।",
+ preterm:"37 सप्ताह से कम + प्रसव संकेत",longContraction:"कॉन्ट्रैक्शन 2 मिनट से अधिक",sixInTen:"10 मिनट में ≥6 कॉन्ट्रैक्शन",waterReason:"पानी टूटना",bleedingReason:"योनि से रक्तस्राव",movementReason:"बच्चे की हलचल स्पष्ट रूप से कम",
+ running:"कॉन्ट्रैक्शन चल रहा है",regularity:"नियमितता",high:"उच्च",medium:"मध्यम",low:"कम",count:"कॉन्ट्रैक्शन",confirmNew:"नया सत्र शुरू करें? मौजूदा सत्र स्थानीय रूप से रहेगा लेकिन अब दिखाई नहीं देगा।",confirmErase:"सभी स्थानीय कॉन्ट्रैक्शन और सेटिंग डेटा मिटाएँ?",invalidEdit:"समाप्त समय शुरू समय के बाद होना चाहिए।",noPhone:"कृपया सेटिंग्स में फोन नंबर जोड़ें।",eventSaved:"घटना सहेजी गई",offline:"ऑफ़लाइन"
+}};
+
+function load(){
+  try{
+    const s=JSON.parse(localStorage.getItem(STORAGE));
+    if(!s) return structuredClone(defaultState);
+    return {
+      ...structuredClone(defaultState),...s,
+      settings:{...defaultState.settings,...(s.settings||{})},
+      session:{...defaultState.session,...(s.session||{}),contractions:s.session?.contractions||[],events:s.session?.events||[]}
+    };
+  }catch(e){return structuredClone(defaultState)}
+}
+function save(){localStorage.setItem(STORAGE,JSON.stringify(state))}
+function tr(k){return (T[state.language]||T.de)[k]||T.de[k]||k}
+function applyLanguage(){
+  document.documentElement.lang=state.language;
+  $("#lang").value=state.language;
+  $$("[data-i18n]").forEach(el=>el.textContent=tr(el.dataset.i18n));
+  $("#offlineBadge").textContent=tr("offline");
+  render();
+}
+function sec(ms){return Math.max(0,Math.round(ms/1000))}
+function fmtSec(s){
+  if(s==null||!isFinite(s))return "—";
+  const m=Math.floor(s/60), ss=Math.round(s%60);
+  return `${String(m).padStart(2,"0")}:${String(ss).padStart(2,"0")}`;
+}
+function fmtClock(ts){return new Date(ts).toLocaleTimeString(state.language==="zh"?"zh-CN":state.language==="hi"?"hi-IN":state.language==="en"?"en-GB":"de-DE",{hour:"2-digit",minute:"2-digit",hour12:false})}
+function duration(c){return sec(c.end-c.start)}
+function intervals(cs=state.session.contractions){return cs.slice(1).map((c,i)=>({ts:c.start,seconds:(c.start-cs[i].start)/1000}))}
+function mean(a){return a.length?a.reduce((x,y)=>x+y,0)/a.length:null}
+function cv(a){if(a.length<2)return null;const m=mean(a);const sd=Math.sqrt(mean(a.map(x=>(x-m)**2)));return m?sd/m:null}
+function trend(a){if(a.length<4)return 0;const n=a.length, xs=[...Array(n).keys()], xm=mean(xs), ym=mean(a);const den=xs.reduce((s,x)=>s+(x-xm)**2,0);return den?xs.reduce((s,x,i)=>s+(x-xm)*(a[i]-ym),0)/den:0}
+function last(arr,n){return arr.slice(Math.max(0,arr.length-n))}
+function safety(){
+  const cs=state.session.contractions, ev=state.session.events;
+  const recentEvents=ev.filter(e=>Date.now()-e.ts<24*3600e3);
+  if(recentEvents.some(e=>e.type==="push")) return {level:"emergency",reason:"pushUrge"};
+  const reasons=[];
+  if(recentEvents.some(e=>e.type==="water")) reasons.push("waterReason");
+  if(recentEvents.some(e=>e.type==="bleeding")) reasons.push("bleedingReason");
+  if(recentEvents.some(e=>e.type==="movement")) reasons.push("movementReason");
+  if(cs.some(c=>duration(c)>120)) reasons.push("longContraction");
+  const starts=cs.map(c=>c.start);
+  for(let i=0;i<starts.length;i++){
+    const n=starts.filter(t=>t>=starts[i] && t<=starts[i]+10*60e3).length;
+    if(n>=6){reasons.push("sixInTen");break}
+  }
+  const gw=parseFloat(state.settings.gestWeek);
+  if(gw && gw<37 && cs.length>=2) reasons.push("preterm");
+  if(reasons.length) return {level:"urgent",reason:reasons.map(tr).join(" · ")};
+  return null;
+}
+function evaluate(){
+  const cs=state.session.contractions, ints=intervals();
+  const s=safety(); if(s) return s;
+  if(!cs.length) return {level:"none"};
+  if(cs.length===1) return {level:"one"};
+  const li=last(ints.map(x=>x.seconds/60),4), ld=last(cs.map(duration),5);
+  const avgI=mean(li), reg=cv(li);
+  const contact = li.length>=3 && avgI<=Number(state.settings.intervalThreshold||5) && (reg==null || reg<=0.35);
+  if(contact) return {level:"contact"};
+  const allInts=last(ints.map(x=>x.seconds/60),5), allDur=last(cs.map(duration),5);
+  const becoming=(allInts.length>=4 && trend(allInts)<-0.18) || (allDur.length>=4 && trend(allDur)>2) || (allInts.length>=4 && cv(allInts)<0.25);
+  if(becoming) return {level:"increasing"};
+  return {level:"observe"};
+}
+function regularity(){
+  const a=last(intervals().map(x=>x.seconds),5), v=cv(a);
+  if(v==null)return ["—",""];
+  if(v<=0.15)return [tr("high"),"ok"];
+  if(v<=0.30)return [tr("medium"),"warn"];
+  return [tr("low"),"danger"];
+}
+function render(){
+  const cs=state.session.contractions, ints=intervals(), ev=evaluate();
+  const map={
+    none:["noData","noDataCopy",""],one:["oneRecorded","oneCopy",""],observe:["observe","observeCopy",""],
+    increasing:["increasing","increasingCopy","warn"],contact:["contact","contactCopy","warn"],
+    urgent:["urgent","urgentCopy","danger"],emergency:["emergency","emergencyCopy","danger"]
+  }[ev.level];
+  $("#statusCard").className="card status-card "+(map[2]||"");
+  $("#statusTitle").textContent=tr(map[0]);
+  $("#statusCopy").textContent=tr(map[1])+(ev.reason?` · ${ev.reason}`:"");
+  const lc=cs.at(-1), li=ints.at(-1);
+  $("#lastDuration").textContent=lc?fmtSec(duration(lc)):"—";
+  $("#lastInterval").textContent=li?fmtSec(li.seconds):"—";
+  const avg=mean(last(ints.map(x=>x.seconds),5)); $("#avgInterval").textContent=avg?fmtSec(avg):"—";
+  const [r,rc]=regularity(); $("#regularityPill").textContent=`${tr("regularity")}: ${r}`;
+  $("#countPill").textContent=`${cs.length} ${tr("count")}`;
+  $("#undoBtn").disabled=!cs.length || !!state.runningStart; $("#editBtn").disabled=!cs.length || !!state.runningStart;
+  $("#contactButtons").hidden=!(["contact","urgent","emergency"].includes(ev.level));
+  $("#emergencyCallBtn").style.display=ev.level==="emergency"?"block":"none";
+  renderHistory(); drawAll();
+}
+function renderHistory(){
+  const host=$("#history"), cs=last(state.session.contractions,6).reverse();
+  host.innerHTML="";
+  if(!cs.length){host.innerHTML=`<div class="status-copy">${tr("noData")}</div>`;return}
+  cs.forEach(c=>{
+    const ix=state.session.contractions.findIndex(x=>x.id===c.id), prev=state.session.contractions[ix-1];
+    const it=prev?(c.start-prev.start)/1000:null;
+    const row=document.createElement("div"); row.className="row";
+    row.innerHTML=`<b>${fmtClock(c.start)}</b><span><span class="muted">${tr("duration")}</span> <b>${fmtSec(duration(c))}</b></span><span><span class="muted">${tr("interval")}</span> <b>${it?fmtSec(it):"—"}</b></span><button class="edit-mini" aria-label="edit">✎</button>`;
+    row.querySelector("button").onclick=()=>openEdit(c.id); host.appendChild(row);
+  });
+}
+function setupCanvas(canvas){
+  const rect=canvas.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  canvas.width=Math.round(rect.width*dpr);canvas.height=Math.round(150*dpr);
+  const ctx=canvas.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);return {ctx,w:rect.width,h:150};
+}
+function drawChart(canvas,points,opt){
+  const {ctx,w,h}=setupCanvas(canvas); ctx.clearRect(0,0,w,h);
+  const pad={l:34,r:10,t:12,b:25}, pw=w-pad.l-pad.r, ph=h-pad.t-pad.b;
+  const text="#8293aa", grid="#243248";
+  ctx.font="10px -apple-system, sans-serif"; ctx.lineWidth=1;
+  const ys=opt.yTicks;
+  ys.forEach(y=>{
+    const py=pad.t+ph*(1-(y-opt.min)/(opt.max-opt.min));
+    ctx.strokeStyle=grid;ctx.beginPath();ctx.moveTo(pad.l,py);ctx.lineTo(w-pad.r,py);ctx.stroke();
+    ctx.fillStyle=text;ctx.textAlign="right";ctx.fillText(String(y),pad.l-5,py+3);
+  });
+  if(opt.threshold!=null){
+    const py=pad.t+ph*(1-(opt.threshold-opt.min)/(opt.max-opt.min));
+    ctx.strokeStyle="#fbbf24";ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(pad.l,py);ctx.lineTo(w-pad.r,py);ctx.stroke();ctx.setLineDash([]);
+  }
+  if(!points.length){ctx.fillStyle=text;ctx.textAlign="center";ctx.fillText("—",w/2,h/2);return}
+  const t0=points[0].ts, t1=points.at(-1).ts, span=Math.max(1,t1-t0);
+  const xy=points.map(p=>({x:pad.l+((p.ts-t0)/span)*pw,y:pad.t+ph*(1-(Math.min(opt.max,Math.max(opt.min,p.val))-opt.min)/(opt.max-opt.min)),...p}));
+  if(xy.length===1)xy[0].x=pad.l+pw/2;
+  ctx.strokeStyle=opt.color;ctx.lineWidth=2.2;ctx.beginPath();xy.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();
+  xy.forEach(p=>{ctx.fillStyle=opt.color;ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill()});
+  const labels=[points[0],points[Math.floor((points.length-1)/2)],points.at(-1)].filter((p,i,a)=>a.findIndex(x=>x.ts===p.ts)===i);
+  labels.forEach(p=>{const x=points.length===1?pad.l+pw/2:pad.l+((p.ts-t0)/span)*pw;ctx.fillStyle=text;ctx.textAlign="center";ctx.fillText(fmtClock(p.ts),x,h-7)});
+}
+function drawAll(){
+  const cs=last(state.session.contractions,20), ints=last(intervals(),20);
+  const imax=Math.max(12,Number(state.settings.intervalThreshold||5)*2,...ints.map(x=>x.seconds/60));
+  drawChart($("#intervalCanvas"),ints.map(x=>({ts:x.ts,val:x.seconds/60})),{min:0,max:Math.ceil(imax),yTicks:[0,Math.round(imax/2),Math.ceil(imax)],threshold:Number(state.settings.intervalThreshold||5),color:"#38bdf8"});
+  const dmax=Math.max(120,...cs.map(duration));
+  drawChart($("#durationCanvas"),cs.map(c=>({ts:c.start,val:duration(c)})),{min:0,max:Math.ceil(dmax/30)*30,yTicks:[0,60,Math.ceil(dmax/30)*30].filter((x,i,a)=>a.indexOf(x)===i),threshold:Number(state.settings.durationThreshold||60),color:"#5eead4"});
+}
+async function wake(){
+  try{if("wakeLock" in navigator)wakeLock=await navigator.wakeLock.request("screen")}catch(e){}
+}
+function releaseWake(){try{wakeLock?.release()}catch(e){}wakeLock=null}
+function tick(){
+  if(!state.runningStart){$("#timer").textContent="00:00";return}
+  $("#timer").textContent=fmtSec((Date.now()-state.runningStart)/1000);
+}
+function start(){
+  state.runningStart=Date.now();save();$("#mainBtn").classList.add("active");$("#mainBtn").textContent=tr("stop");$("#timerLabel").textContent=tr("running");tick();timerId=setInterval(tick,250);wake();try{navigator.vibrate?.(35)}catch(e){}
+}
+function stop(){
+  const end=Date.now(), start=state.runningStart;if(!start)return;
+  if(end-start<1000){return}
+  state.session.contractions.push({id:crypto.randomUUID?.()||String(Date.now()),start,end});
+  state.runningStart=null;clearInterval(timerId);timerId=null;releaseWake();save();
+  $("#mainBtn").classList.remove("active");$("#mainBtn").textContent=tr("start");$("#timerLabel").textContent=tr("ready");$("#timer").textContent="00:00";render();try{navigator.vibrate?.([35,30,35])}catch(e){}
+}
+function restoreRunning(){
+  if(state.runningStart){$("#mainBtn").classList.add("active");$("#mainBtn").textContent=tr("stop");$("#timerLabel").textContent=tr("running");tick();timerId=setInterval(tick,250);wake()}
+}
+function addEvent(type){
+  state.session.events.push({id:crypto.randomUUID?.()||String(Date.now()),type,ts:Date.now()});save();render();try{navigator.vibrate?.(50)}catch(e){}
+}
+function undo(){
+  if(!state.session.contractions.length)return;
+  state.session.contractions.pop();save();render();
+}
+function localInput(ts){const d=new Date(ts), p=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`}
+function openEdit(id){
+  const c=state.session.contractions.find(x=>x.id===id);if(!c)return;editId=id;$("#editStart").value=localInput(c.start);$("#editEnd").value=localInput(c.end);$("#editDialog").showModal();
+}
+function saveEdit(){
+  const c=state.session.contractions.find(x=>x.id===editId), s=new Date($("#editStart").value).getTime(), e=new Date($("#editEnd").value).getTime();
+  if(!c||!s||!e||e<=s){alert(tr("invalidEdit"));return false}
+  c.start=s;c.end=e;state.session.contractions.sort((a,b)=>a.start-b.start);save();render();return true
+}
+function openSettings(){
+  Object.entries(state.settings).forEach(([k,v])=>{const el=$("#"+k);if(el)el.value=v});$("#settingsDialog").showModal()
+}
+function saveSettings(){
+  state.settings.gestWeek=$("#gestWeek").value;
+  state.settings.intervalThreshold=Number($("#intervalThreshold").value||5);
+  state.settings.durationThreshold=Number($("#durationThreshold").value||60);
+  state.settings.persistenceThreshold=Number($("#persistenceThreshold").value||60);
+  state.settings.maternityPhone=$("#maternityPhone").value.trim();
+  state.settings.emergencyPhone=$("#emergencyPhone").value.trim();save();render();
+}
+function callNumber(kind){
+  const n=kind==="hospital"?state.settings.maternityPhone:state.settings.emergencyPhone;
+  if(!n){alert(tr("noPhone"));openSettings();return}
+  location.href="tel:"+n.replace(/[^\d+]/g,"");
+}
+function newSession(){
+  if(!confirm(tr("confirmNew")))return;
+  if(state.runningStart)stop();
+  state.session={id:Date.now(),startedAt:Date.now(),contractions:[],events:[]};save();render();
+}
+function eraseAll(){
+  if(!confirm(tr("confirmErase")))return;
+  localStorage.removeItem(STORAGE);state=structuredClone(defaultState);location.reload();
+}
+function exportCSV(){
+  const rows=[["session_id","start_iso","end_iso","duration_sec","interval_start_to_start_sec"]];
+  const cs=state.session.contractions;
+  cs.forEach((c,i)=>rows.push([state.session.id,new Date(c.start).toISOString(),new Date(c.end).toISOString(),duration(c),i?(c.start-cs[i-1].start)/1000:""]));
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(",")).join("\n");
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=`wehentracker_${new Date().toISOString().slice(0,10)}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+$("#mainBtn").onclick=()=>state.runningStart?stop():start();
+$$(".quick").forEach(b=>b.onclick=()=>addEvent(b.dataset.event));
+$("#undoBtn").onclick=undo;$("#editBtn").onclick=()=>{const c=state.session.contractions.at(-1);if(c)openEdit(c.id)};
+$("#newSessionBtn").onclick=newSession;$("#exportBtn").onclick=exportCSV;
+$("#settingsBtn").onclick=openSettings;$("#saveSettings").onclick=saveSettings;$("#eraseAll").onclick=eraseAll;
+$("#saveEdit").onclick=e=>{if(!saveEdit()){e.preventDefault()}};
+$("#lang").onchange=e=>{state.language=e.target.value;save();applyLanguage()};
+$("#hospitalCallBtn").onclick=()=>callNumber("hospital");$("#emergencyCallBtn").onclick=()=>callNumber("emergency");
+window.addEventListener("resize",()=>requestAnimationFrame(drawAll));
+window.addEventListener("online",()=>$("#offlineBadge").classList.remove("show"));
+window.addEventListener("offline",()=>$("#offlineBadge").classList.add("show"));
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&state.runningStart)wake()});
+if(!navigator.onLine)$("#offlineBadge").classList.add("show");
+applyLanguage();restoreRunning();
+if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("./service-worker.js").catch(()=>{});
+})();
+</script>
+</body>
+</html>
